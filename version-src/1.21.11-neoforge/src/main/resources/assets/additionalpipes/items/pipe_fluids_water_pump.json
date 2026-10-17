@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "additionalpipes:item/pipe_fluids_water_pump"
+  }
+}

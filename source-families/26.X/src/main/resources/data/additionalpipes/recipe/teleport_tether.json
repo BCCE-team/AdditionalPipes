@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "iii",
+    "iLi",
+    "ici"
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "c": {
+      "item": "buildcraftsilicon:redstone_chipset/quartz"
+    }
+  },
+  "result": {
+    "id": "additionalpipes:teleport_tether"
+  }
+}

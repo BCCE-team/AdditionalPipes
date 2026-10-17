@@ -24,8 +24,14 @@ jobs:
           python-version: '3.11'
       - name: Check canonical targets, mod metadata and source layout
         run: python scripts/validate_targets.py
-      - name: Test overlay precedence
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test service algorithms, protocol and overlay precedence
         run: python -m unittest discover -s scripts/tests -v
+      - name: Synthetically compile seven effective-source variants
+        run: python scripts/stub_compile_targets.py
 
   # AP needs seven platform-matched BCCE binaries. The archive URL must be
   # configured in repository variables before compile jobs are enabled.
@@ -71,10 +77,13 @@ jobs:
             1.21.X) targets=(1.21.1-neoforge 1.21.11-neoforge) ;;
             26.X) targets=(26.1.2-neoforge 26.2-neoforge 26.3-neoforge) ;;
           esac
+          version=$(sed -n 's/^common.mod.version=//p' build-config/common.properties | tr -d '\r')
+          archive=$(sed -n 's/^common.mod.archive_name=//p' build-config/common.properties | tr -d '\r')
+          test -n "$version" && test -n "$archive"
           for target in "${targets[@]}"; do
             mc="${target%-*}"
             loader="${target##*-}"
-            jar="build/${mc}/AdditionalPipes-BCCE-0.1.0-dev+${mc}+${loader}.jar"
+            jar="build/${mc}/${archive}-${version}+${mc}+${loader}.jar"
             python scripts/verify_ap_jar.py "$target" "$jar"
           done
       - uses: actions/upload-artifact@v4

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " R ",
+    "RCR",
+    " R "
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "C": {
+      "item": "buildcrafttransport:clay_item"
+    }
+  },
+  "result": {
+    "item": "additionalpipes:pipe_items_addition"
+  }
+}

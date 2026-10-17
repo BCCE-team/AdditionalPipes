@@ -51,11 +51,48 @@ def check() -> None:
             report = materialize(target, Path(tmp)/target)
             layout = Path(tmp)/target/'src/main'
             java_files = {f.name for f in (layout/'java').rglob('*.java')}
+            assert 'APContentRegistry.java' in java_files, target
+            assert 'APContent.java' in java_files, target
+            assets = layout/'resources/assets/additionalpipes'
+            assert len(list((assets/'blockstates').glob('*.json'))) == 18, target
+            assert len(list((assets/'models/item').glob('*.json'))) == 19, target
+            assert len(list((assets/'textures/block').glob('*.png'))) == 42, target
+            assert (assets/'textures/item/dog_deaggravator.png').exists(), target
+            lang = json.loads((assets/'lang/en_us.json').read_text())
+            assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 18, target
+            assert not (assets/'lang/ru_ru.json').exists(), target
+            recipe_dir = layout/'resources/data/additionalpipes'/('recipes' if generation=='old' else 'recipe')
+            assert len(list(recipe_dir.glob('*.json'))) == 18, target
+            assembly = recipe_dir/'assembly/pipe_items_teleport.json'
+            assert json.loads(assembly.read_text())['MJ'] == 10000000000, target
+            if target.startswith(('26.', '1.21.11')):
+                assert len(list((assets/'items').glob('*.json'))) == 19, target
             assert 'AdditionalPipes.java' in java_files, target
             forge = 'AdditionalPipesForge.java' in java_files
             neo = 'AdditionalPipesNeoForge.java' in java_files
             assert forge != neo, f'{target}: wrong or mixed loader bootstrap'
             assert forge == (loader == 'forge'), target
+            mandatory_classes = ('APConfiguration.java', 'TeleportManager.java',
+                                 'APProtocol.java', 'PacketHandler.java',
+                                 'ChunkLoadingService.java', 'ChunkLoadingHandler.java',
+                                 'PlatformNetwork.java', 'PlatformChunkTickets.java')
+            assert all(name in java_files for name in mandatory_classes), f'{target}: incomplete service layer'
+            chunk_code = (layout/'java/buildcraft/additionalpipes/platform/chunk/PlatformChunkTickets.java').read_text('utf-8')
+            wire_code = (layout/'java/buildcraft/additionalpipes/platform/network/PlatformNetwork.java').read_text('utf-8')
+            if loader == 'forge':
+                assert 'ForgeChunkManager' in chunk_code and 'SimpleChannel' in wire_code, target
+                assert 'net.neoforged.' not in chunk_code + wire_code, target
+            else:
+                assert 'TicketController' in chunk_code and 'playBidirectional' in wire_code, target
+                if target == '1.21.1-neoforge':
+                    assert 'ResourceLocation' in chunk_code + wire_code, target
+                    assert 'ClientPacketDistributor.sendToServer' not in wire_code, target
+                    assert 'PlatformNetwork::handlePayload);' in wire_code, target
+                else:
+                    assert 'net.minecraft.resources.Identifier' in chunk_code, target
+                    assert 'net.minecraft.resources.Identifier' in wire_code, target
+                    assert 'ClientPacketDistributor.sendToServer' in wire_code, target
+                    assert 'PlatformNetwork::handlePayload, PlatformNetwork::handlePayload' in wire_code, target
             metadata_name = 'mods.toml' if loader == 'forge' else 'neoforge.mods.toml'
             metadata_path = layout/'resources/META-INF'/metadata_name
             assert metadata_path.exists(), f'{target}: metadata missing: {metadata_name}'
@@ -64,8 +101,8 @@ def check() -> None:
             metadata = tomllib.loads(metadata_path.read_text('utf-8'))
             assert metadata['mods'][0]['modId'] == 'additionalpipes', target
             dependencies = {dep['modId']:dep for dep in metadata['dependencies']['additionalpipes']}
-            assert {'minecraft','buildcraftlib','buildcrafttransport',loader} == set(dependencies), target
-            for mid in ('buildcraftlib','buildcrafttransport'):
+            assert {'minecraft','buildcraftlib','buildcrafttransport','buildcraftcore','buildcraftsilicon',loader} == set(dependencies), target
+            for mid in ('buildcraftlib','buildcrafttransport','buildcraftcore','buildcraftsilicon'):
                 key='mandatory' if loader == 'forge' else 'type'
                 assert dependencies[mid][key] == (True if loader == 'forge' else 'required'), target
             pack = (layout/'resources/pack.mcmeta').read_text('utf-8')

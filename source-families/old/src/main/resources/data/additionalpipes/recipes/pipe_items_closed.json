@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:void_item"
+    },
+    {
+      "item": "buildcraftcore:gears/gear_iron"
+    }
+  ],
+  "result": {
+    "item": "additionalpipes:pipe_items_closed"
+  }
+}

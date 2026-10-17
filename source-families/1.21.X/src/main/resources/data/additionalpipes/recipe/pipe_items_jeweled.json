@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " D ",
+    "DGD",
+    " D "
+  ],
+  "key": {
+    "D": {
+      "item": "buildcrafttransport:diamond_item"
+    },
+    "G": {
+      "item": "buildcraftsilicon:redstone_chipset/gold"
+    }
+  },
+  "result": {
+    "id": "additionalpipes:pipe_items_jeweled",
+    "count": 2
+  }
+}

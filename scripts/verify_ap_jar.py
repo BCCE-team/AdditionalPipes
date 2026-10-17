@@ -19,6 +19,11 @@ def verify(target: str, path: Path):
     with zipfile.ZipFile(path) as z:
         names=set(z.namelist())
         assert 'buildcraft/additionalpipes/AdditionalPipes.class' in names, 'AP entrypoint missing'
+        for required in ('service/APServices.class', 'service/BCCEIntegration.class',
+                         'pipes/TeleportManager.class', 'network/APProtocol.class',
+                         'network/ChunkloadRequestHandler.class', 'chunkloader/ChunkLoadingService.class',
+                         'platform/network/PlatformNetwork.class', 'platform/chunk/PlatformChunkTickets.class'):
+            assert 'buildcraft/additionalpipes/' + required in names, f'{target}: missing {required}'
         assert not any(n.startswith('buildcraft/api/') for n in names), 'BCCE API was improperly embedded'
         assert not any(n.startswith('buildcraft/transport/') for n in names), 'BCCE implementation was improperly embedded'
         must='buildcraft/additionalpipes/platform/AdditionalPipesForge.class' if loader=='forge' else 'buildcraft/additionalpipes/platform/AdditionalPipesNeoForge.class'

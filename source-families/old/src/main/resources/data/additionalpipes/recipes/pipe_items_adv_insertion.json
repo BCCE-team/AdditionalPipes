@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IgI"
+  ],
+  "key": {
+    "I": {
+      "item": "buildcraftcore:gears/gear_iron"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    }
+  },
+  "result": {
+    "item": "additionalpipes:pipe_items_adv_insertion",
+    "count": 8
+  }
+}

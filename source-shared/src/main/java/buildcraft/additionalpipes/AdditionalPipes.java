@@ -1,17 +1,15 @@
 package buildcraft.additionalpipes;
 
-/**
- * Loader-neutral entry point for the new Additional Pipes integration.
- * Content registration is intentionally not implemented in the scaffolding phase.
- */
+import buildcraft.additionalpipes.service.APServices;
+import java.nio.file.Path;
+
+/** Loader-neutral entry point. Runtime service setup is independent of content registration. */
 public final class AdditionalPipes {
     public static final String MOD_ID = "additionalpipes";
+    private AdditionalPipes() { }
 
-    private AdditionalPipes() {
-    }
-
-    /** Called by the loader-specific adapters. */
+    /** Called by Forge/NeoForge constructors. */
     public static void initialize() {
-        // Future API v2 services and pipe registration are initialized here.
+        APServices.initialize(Path.of("config"));
     }
 }

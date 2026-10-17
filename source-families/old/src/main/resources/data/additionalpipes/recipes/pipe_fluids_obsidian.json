@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:obsidian_item"
+    },
+    {
+      "item": "buildcrafttransport:waterproof"
+    }
+  ],
+  "result": {
+    "item": "additionalpipes:pipe_fluids_obsidian"
+  }
+}

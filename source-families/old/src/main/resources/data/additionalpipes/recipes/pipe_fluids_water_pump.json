@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " L ",
+    "rPr",
+    " W "
+  ],
+  "key": {
+    "r": {
+      "item": "minecraft:redstone"
+    },
+    "P": {
+      "item": "buildcraftcore:gears/gear_iron"
+    },
+    "L": {
+      "item": "buildcrafttransport:gold_fluid"
+    },
+    "W": {
+      "item": "buildcrafttransport:wood_fluid"
+    }
+  },
+  "result": {
+    "item": "additionalpipes:pipe_fluids_water_pump"
+  }
+}

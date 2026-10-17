@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "buildcrafttransport:void_item"
+    },
+    {
+      "item": "buildcraftcore:gears/gear_iron"
+    }
+  ],
+  "result": {
+    "id": "additionalpipes:pipe_items_closed"
+  }
+}

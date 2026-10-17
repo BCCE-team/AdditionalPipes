@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "additionalpipes:block/pipe_items_gravity_feed"
+    }
+  }
+}

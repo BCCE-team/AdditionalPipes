@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WgW"
+  ],
+  "key": {
+    "W": {
+      "item": "buildcraftcore:gears/gear_wood"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    }
+  },
+  "result": {
+    "item": "additionalpipes:pipe_items_adv_wood",
+    "count": 8
+  }
+}

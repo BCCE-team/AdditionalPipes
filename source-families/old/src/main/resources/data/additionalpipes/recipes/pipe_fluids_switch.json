@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "additionalpipes:pipe_items_switch"
+    },
+    {
+      "item": "buildcrafttransport:waterproof"
+    }
+  ],
+  "result": {
+    "item": "additionalpipes:pipe_fluids_switch"
+  }
+}

@@ -54,8 +54,6 @@ Shared code belongs in `source-shared`, while differences between Minecraft gene
 
 The goal is consistent player-visible behaviour across versions, even where Minecraft or loader changes require different implementations.
 
-See [`DEVELOPMENT.md`](DEVELOPMENT.md) for build commands, importing BCCE development JARs, and source layout details.
-
 ## Issue reports
 
 Please use the repository issue tracker when reporting bugs or suggesting features.

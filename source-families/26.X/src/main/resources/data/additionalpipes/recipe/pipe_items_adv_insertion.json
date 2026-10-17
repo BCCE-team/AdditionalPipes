@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IgI"
+  ],
+  "key": {
+    "I": {
+      "item": "buildcraftcore:gears/gear_iron"
+    },
+    "g": {
+      "item": "minecraft:glass"
+    }
+  },
+  "result": {
+    "id": "additionalpipes:pipe_items_adv_insertion",
+    "count": 8
+  }
+}

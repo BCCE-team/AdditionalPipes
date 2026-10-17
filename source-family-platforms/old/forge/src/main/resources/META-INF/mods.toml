@@ -9,7 +9,7 @@ version="${mod_version}"
 displayName="Additional Pipes for BuildCraft Community Edition"
 authors="Additional Pipes Contributors, BCCE community"
 description='''
-Additional Pipes integration for BuildCraft Community Edition (infrastructure-only build).
+Additional Pipes content and crafting for BuildCraft Community Edition.
     '''
 displayTest="MATCH_VERSION"
 
@@ -36,6 +36,20 @@ side="BOTH"
 
 [[dependencies.additionalpipes]]
 modId="buildcrafttransport"
+mandatory=true
+versionRange="${buildcraft_version_range}"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.additionalpipes]]
+modId="buildcraftcore"
+mandatory=true
+versionRange="${buildcraft_version_range}"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.additionalpipes]]
+modId="buildcraftsilicon"
 mandatory=true
 versionRange="${buildcraft_version_range}"
 ordering="AFTER"

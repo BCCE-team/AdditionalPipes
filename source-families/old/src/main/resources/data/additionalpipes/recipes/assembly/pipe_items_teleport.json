@@ -1,0 +1,25 @@
+{
+  "type": "buildcraftsilicon:assembly",
+  "MJ": 10000000000,
+  "group": "additionalpipes:teleport_pipes",
+  "ingredient_counts": [
+    1,
+    1,
+    1
+  ],
+  "ingredients": [
+    {
+      "item": "buildcraftsilicon:redstone_chipset/diamond"
+    },
+    {
+      "item": "buildcrafttransport:diamond_item"
+    },
+    {
+      "item": "buildcraftsilicon:redstone_chipset/quartz"
+    }
+  ],
+  "result": {
+    "item": "additionalpipes:pipe_items_teleport",
+    "count": 8
+  }
+}
