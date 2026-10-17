@@ -1,0 +1,54 @@
+/* Legacy Forge adapter for the old family (1.19.2 / 1.20.1). */
+apply from: new File(rootProject.file('../..').canonicalFile, 'build-logic/common-target.gradle')
+def ap = project.ext.apTarget
+
+def mcVersion = ap.minecraftVersion
+def forgeVersion = ap.required('deps.forge')
+
+minecraft {
+    mappings channel: 'official', version: mcVersion
+    runs {
+        configureEach {
+            workingDirectory new File(ap.repo, "run/${ap.generation}/${ap.target}")
+            property 'forge.logging.console.level', 'info'
+            mods {
+                additionalpipes {
+                    source sourceSets.main
+                }
+            }
+        }
+        client {}
+        server {
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'LocalBCCE'
+        url = ap.localMavenRoot.toURI()
+        metadataSources { mavenPom(); artifact() }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${mcVersion}-${forgeVersion}"
+    // FG must remap the production BCCE jar for the Forge dev environment.
+    compileOnly fg.deobf(ap.bcceCoordinates)
+    runtimeOnly fg.deobf(ap.bcceCoordinates)
+}
+
+afterEvaluate {
+    def reobfTask = tasks.findByName('reobfJar')
+    if (reobfTask != null) {
+        tasks.named('jar') { finalizedBy reobfTask }
+    }
+}
+
+tasks.register('buildAndCollect') {
+    group = 'build'
+    description = "Build Additional Pipes ${ap.target} into ${ap.jarFolder}"
+    dependsOn tasks.named('build')
+}

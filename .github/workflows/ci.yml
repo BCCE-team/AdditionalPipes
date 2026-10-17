@@ -1,0 +1,84 @@
+name: Additional Pipes CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: additional-pipes-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate seven platform source layouts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check canonical targets, mod metadata and source layout
+        run: python scripts/validate_targets.py
+      - name: Test overlay precedence
+        run: python -m unittest discover -s scripts/tests -v
+
+  # AP needs seven platform-matched BCCE binaries. The archive URL must be
+  # configured in repository variables before compile jobs are enabled.
+  build:
+    name: Build ${{ matrix.generation }} / Java ${{ matrix.java }}
+    needs: validate
+    if: ${{ vars.AP_BCCE_ARCHIVE_URL != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - generation: old
+            java: '17'
+          - generation: 1.21.X
+            java: '21'
+          - generation: 26.X
+            java: '25'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Retrieve version-matched BCCE binary archive
+        env:
+          BCCE_URL: ${{ vars.AP_BCCE_ARCHIVE_URL }}
+        run: curl --fail --location --retry 3 "$BCCE_URL" --output /tmp/bcce-build.zip
+      - name: Verify and import BuildCraft API v2 jars
+        run: python scripts/import_bcce.py --archive /tmp/bcce-build.zip
+      - name: Build family with its own wrapper and Stonecutter
+        run: ./gradlew buildAndCollect
+        working-directory: builds/${{ matrix.generation }}
+      - name: Verify built jar contents for all family targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          case '${{ matrix.generation }}' in
+            old) targets=(1.19.2-forge 1.20.1-forge) ;;
+            1.21.X) targets=(1.21.1-neoforge 1.21.11-neoforge) ;;
+            26.X) targets=(26.1.2-neoforge 26.2-neoforge 26.3-neoforge) ;;
+          esac
+          for target in "${targets[@]}"; do
+            mc="${target%-*}"
+            loader="${target##*-}"
+            jar="build/${mc}/AdditionalPipes-BCCE-0.1.0-dev+${mc}+${loader}.jar"
+            python scripts/verify_ap_jar.py "$target" "$jar"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: additional-pipes-${{ matrix.generation }}
+          path: build/*/AdditionalPipes-BCCE-*.jar
+          if-no-files-found: error

@@ -1,0 +1,184 @@
+/*
+ * Additional Pipes build-source layering shared by Forge and NeoForge.
+ * All target values live in build-config/targets.properties; source roots are
+ * materialized for the active Stonecutter target, never edited in place.
+ */
+
+if (!project.ext.has('apBuildGeneration')) {
+    throw new GradleException('Target shim must configure apBuildGeneration')
+}
+def generation = project.ext.apBuildGeneration.toString()
+def repositoryRoot = rootProject.file('../..').canonicalFile
+def configFile = new File(repositoryRoot, 'build-config/common.properties')
+def targetsFile = new File(repositoryRoot, 'build-config/targets.properties')
+def selectorFile = rootProject.file('targets.properties')
+
+def configuration = new Properties()
+[configFile, targetsFile].each { file ->
+    if (!file.isFile()) throw new GradleException("Missing Additional Pipes configuration: ${file}")
+    file.withInputStream { configuration.load(it) }
+}
+def selector = new Properties()
+selectorFile.withInputStream { selector.load(it) }
+def target = project.name
+def prefix = "target.${target}."
+
+if (selector.getProperty('generation') != generation || configuration.getProperty(prefix + 'build.generation') != generation) {
+    throw new GradleException("Stonecutter target ${target} does not belong to generation ${generation}")
+}
+def getProperty = { String name ->
+    if (project.hasProperty(name)) return project.property(name).toString().trim()
+    return (configuration.getProperty(prefix + name) ?: configuration.getProperty('common.' + name) ?: '').trim()
+}
+def required = { String name ->
+    def value = getProperty(name)
+    if (!value) throw new GradleException("Missing ${name} for target ${target}")
+    return value
+}
+
+def family = required('source.family')
+def loader = required('source.platform')
+def minecraftVersion = required('deps.minecraft')
+def javaVersion = Integer.parseInt(required('java.version'))
+def modVersion = required('mod.version')
+def archiveName = required('mod.archive_name')
+
+def sourceLayerPaths = [
+    required('source.shared_root'),
+    configuration.getProperty("source.family.${family}.root"),
+    configuration.getProperty("source.platform.${loader}.root"),
+    configuration.getProperty("source.family_platform.${family}.${loader}.root"),
+    required('source.overlay_root')
+]
+if (sourceLayerPaths.any { it == null || it.trim().isEmpty() }) {
+    throw new GradleException("Incomplete Additional Pipes source layers for ${target}")
+}
+def sourceLayers = sourceLayerPaths.collect { String layer -> new File(repositoryRoot, layer) }
+sourceLayers.each { layer ->
+    if (!layer.isDirectory()) throw new GradleException("Source layer missing: ${layer}")
+}
+
+def localMavenRoot = new File(repositoryRoot, required('bcce.maven_root'))
+def bcceGroup = required('bcce.group')
+def bcceModule = required('bcce.module')
+def bcceVersion = required('bcce.version')
+def bccePublicationVersion = "${bcceVersion}-${target}"
+def bcceCoordinates = "${bcceGroup}:${bcceModule}:${bccePublicationVersion}"
+def bcceJar = new File(localMavenRoot,
+    "${bcceGroup.replace('.', '/')}/${bcceModule}/${bccePublicationVersion}/${bcceModule}-${bccePublicationVersion}.jar")
+
+version = "${modVersion}+${target.replace('-', '+')}"
+group = required('mod.group')
+base.archivesName = archiveName
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
+    withSourcesJar()
+}
+
+def outputRootProvider = layout.buildDirectory.dir("effective-source/${target}")
+def outputRoot = outputRootProvider.get().asFile
+def materializeScript = new File(repositoryRoot, 'scripts/materialize_sources.py')
+
+def pythonExecutable = providers.gradleProperty('pythonExecutable')
+    .orElse(providers.environmentVariable('PYTHON')).orElse('python3').get()
+
+def prepare = tasks.register('prepareEffectiveSource', Exec) {
+    group = 'build setup'
+    description = "Merge the Additional Pipes source layers for ${target}"
+    workingDir repositoryRoot
+    environment 'PYTHONDONTWRITEBYTECODE', '1'
+    inputs.files(sourceLayers)
+    inputs.files(configFile, targetsFile, selectorFile, materializeScript)
+    outputs.dir(outputRootProvider)
+    commandLine pythonExecutable, materializeScript.absolutePath, target, '--output', outputRoot.absolutePath
+}
+
+sourceSets {
+    main {
+        java.setSrcDirs([new File(outputRoot, 'src/main/java')])
+        resources.setSrcDirs([new File(outputRoot, 'src/main/resources')])
+    }
+    test {
+        java.setSrcDirs([new File(outputRoot, 'src/test/java')])
+        resources.setSrcDirs([new File(outputRoot, 'src/test/resources')])
+    }
+}
+
+def verifyBcceJar = tasks.register('verifyLocalBcceJar') {
+    group = 'verification'
+    description = "Require the BCCE ${bcceVersion} build for ${target}"
+    inputs.file(bcceJar).optional()
+    doLast {
+        if (!bcceJar.isFile()) {
+            throw new GradleException("Missing BuildCraft dependency: ${bcceJar}. Run: python scripts/import_bcce.py --archive /path/to/build.zip")
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn prepare
+    dependsOn verifyBcceJar
+    options.encoding = 'UTF-8'
+}
+tasks.withType(ProcessResources).configureEach {
+    dependsOn prepare
+}
+tasks.matching { it.name == 'createMinecraftArtifacts' }.configureEach {
+    dependsOn prepare
+}
+
+def variables = [
+    mod_version: project.version.toString(),
+    mod_license: required('mod.license'),
+    loader_version_range: required('loader.version_range'),
+    minecraft_version_range: required('minecraft.version_range'),
+    buildcraft_version_range: "[${bcceVersion},)",
+    pack_format: required('pack.format'),
+    resource_pack_format: required('pack.resource_format'),
+    data_pack_format: required('pack.data_format')
+]
+if (loader == 'forge') {
+    variables.forge_version_range = required('forge.version_range')
+} else {
+    variables.neo_version_range = required('neoforge.version_range')
+}
+tasks.named('processResources', ProcessResources) {
+    inputs.properties(variables)
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
+        expand(variables)
+    }
+}
+
+def jarFolder = new File(repositoryRoot, "build/${minecraftVersion}")
+tasks.withType(Jar).configureEach {
+    dependsOn prepare
+    destinationDirectory.set(jarFolder)
+}
+tasks.named('jar', Jar) {
+    archiveClassifier = ''
+    manifest {
+        attributes([
+            'Specification-Title': required('mod.name'),
+            'Specification-Version': modVersion,
+            'Implementation-Title': required('mod.name'),
+            'Implementation-Version': project.version.toString(),
+            'Implementation-Vendor': required('mod.authors')
+        ])
+    }
+}
+
+project.ext.apTarget = [
+    target: target,
+    generation: generation,
+    loader: loader,
+    minecraftVersion: minecraftVersion,
+    javaVersion: javaVersion,
+    repo: repositoryRoot,
+    required: required,
+    outputRoot: outputRoot,
+    prepare: prepare,
+    localMavenRoot: localMavenRoot,
+    bcceCoordinates: bcceCoordinates,
+    bcceJar: bcceJar,
+    jarFolder: jarFolder
+]

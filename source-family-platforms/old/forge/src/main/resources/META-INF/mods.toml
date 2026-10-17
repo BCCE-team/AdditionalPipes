@@ -1,0 +1,42 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+showAsResourcePack=false
+
+[[mods]]
+modId="additionalpipes"
+version="${mod_version}"
+displayName="Additional Pipes for BuildCraft Community Edition"
+authors="Additional Pipes Contributors, BCCE community"
+description='''
+Additional Pipes integration for BuildCraft Community Edition (infrastructure-only build).
+    '''
+displayTest="MATCH_VERSION"
+
+[[dependencies.additionalpipes]]
+modId="forge"
+mandatory=true
+versionRange="${forge_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.additionalpipes]]
+modId="minecraft"
+mandatory=true
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.additionalpipes]]
+modId="buildcraftlib"
+mandatory=true
+versionRange="${buildcraft_version_range}"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.additionalpipes]]
+modId="buildcrafttransport"
+mandatory=true
+versionRange="${buildcraft_version_range}"
+ordering="AFTER"
+side="BOTH"

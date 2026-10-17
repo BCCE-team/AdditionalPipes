@@ -1,0 +1,17 @@
+.gradle/
+**/.gradle/
+**/build/
+/build/
+/run/
+/run-data/
+/logs/
+/local-deps/
+*.log
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.DS_Store
+__pycache__/
+*.pyc

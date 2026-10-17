@@ -1,0 +1,46 @@
+/* NeoForge adapter for 1.21.X and 26.X. */
+apply from: new File(rootProject.file('../..').canonicalFile, 'build-logic/common-target.gradle')
+def ap = project.ext.apTarget
+
+neoForge {
+    version = ap.required('deps.neoforge')
+
+    runs {
+        client {
+            client()
+            gameDirectory = new File(ap.repo, "run/${ap.generation}/${ap.target}")
+        }
+        server {
+            server()
+            gameDirectory = new File(ap.repo, "run/${ap.generation}/${ap.target}")
+            programArgument '--nogui'
+        }
+    }
+    mods {
+        additionalpipes {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'LocalBCCE'
+        url = ap.localMavenRoot.toURI()
+        metadataSources { mavenPom(); artifact() }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly ap.bcceCoordinates
+    // ModDev's localRuntime lets the BCCE jar load during client/server dev runs
+    // without accidentally distributing it inside the Additional Pipes artifact.
+    localRuntime ap.bcceCoordinates
+}
+
+tasks.register('buildAndCollect') {
+    group = 'build'
+    description = "Build Additional Pipes ${ap.target} into ${ap.jarFolder}"
+    dependsOn tasks.named('build')
+}
