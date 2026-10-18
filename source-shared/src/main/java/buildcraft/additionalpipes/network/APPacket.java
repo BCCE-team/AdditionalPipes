@@ -10,7 +10,8 @@ import java.util.UUID;
 /** Immutable packet payloads. Content event handlers are installed in later port stages. */
 public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.TeleportUpdate,
     APPacket.AdvancedWoodUpdate, APPacket.TeleportData, APPacket.ChunkloadRequest,
-    APPacket.ChunkloadData, APPacket.JeweledServerUpdate, APPacket.JeweledClientUpdate {
+    APPacket.ChunkloadData, APPacket.JeweledServerUpdate, APPacket.JeweledClientUpdate,
+    APPacket.TeleportView, APPacket.TeleportViewRequest {
 
     APMessageType type();
 
@@ -27,9 +28,35 @@ public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.Teleport
     record TeleportUpdate(PipeLocation position, int frequency, boolean isPublic, byte operation) implements APPacket {
         public TeleportUpdate {
             Objects.requireNonNull(position);
-            if (frequency < 0 || operation < 0 || operation > 3) throw new IllegalArgumentException("Invalid teleport update");
+            if (frequency < 0 || frequency > 999_999 || operation < 0 || operation > 3) throw new IllegalArgumentException("Invalid teleport update");
         }
         @Override public APMessageType type() { return APMessageType.TELEPORT_UPDATE; }
+    }
+    record TeleportView(PipeLocation position, int frequency, byte operation, boolean isPublic,
+                        UUID ownerUUID, String ownerName, String medium, int connectedCount,
+                        List<PipeLocation> connections, boolean open) implements APPacket {
+        public TeleportView(PipeLocation position, int frequency, byte operation, boolean isPublic,
+                            String ownerName, String medium, int connectedCount,
+                            List<PipeLocation> connections, boolean open) {
+            this(position, frequency, operation, isPublic, null, ownerName, medium, connectedCount, connections, open);
+        }
+        public TeleportView {
+            Objects.requireNonNull(position);
+            Objects.requireNonNull(ownerName);
+            Objects.requireNonNull(medium);
+            Objects.requireNonNull(connections);
+            if (frequency < 0 || frequency > 999_999 || operation < 0 || operation > 3
+                || ownerName.length() > 64 || medium.length() > 24 || connectedCount < 0
+                || connectedCount > 100_000 || connections.size() > 3 || connections.stream().anyMatch(Objects::isNull)) {
+                throw new IllegalArgumentException("Invalid teleport GUI state");
+            }
+            connections = List.copyOf(connections);
+        }
+        @Override public APMessageType type() { return APMessageType.TELEPORT_VIEW; }
+    }
+    record TeleportViewRequest(PipeLocation position) implements APPacket {
+        public TeleportViewRequest { Objects.requireNonNull(position); }
+        @Override public APMessageType type() { return APMessageType.TELEPORT_VIEW_REQUEST; }
     }
     record AdvancedWoodUpdate(PipeLocation position) implements APPacket {
         public AdvancedWoodUpdate { Objects.requireNonNull(position); }

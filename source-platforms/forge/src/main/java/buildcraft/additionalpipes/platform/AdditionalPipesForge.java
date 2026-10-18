@@ -19,7 +19,7 @@ public final class AdditionalPipesForge {
         PlatformChunkTickets.init();
         PlatformNetwork.init();
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) ->
-            APServices.serverStarted(event.getServer().getWorldPath(LevelResource.ROOT)));
+            APServices.serverStarted(event.getServer().getWorldPath(LevelResource.ROOT), event.getServer()));
         MinecraftForge.EVENT_BUS.addListener((ServerStoppingEvent event) -> APServices.serverStopped());
     }
 }

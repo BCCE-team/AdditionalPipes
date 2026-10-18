@@ -115,6 +115,9 @@ public final class InfrastructureRegression {
             new APPacket.TeleportUpdate(location,55,true,(byte)3),
             new APPacket.AdvancedWoodUpdate(location),
             new APPacket.TeleportData(location,new int[]{5,6,7},UUID.randomUUID(),"Player"),
+            new APPacket.TeleportView(location, 55, (byte)3, true, UUID.fromString("0d691622-7b38-458c-9b2c-b3b1a31f0392"), "Player", "ITEMS", 2,
+                List.of(A, new PipeLocation("minecraft:the_end", 64, 70, 32)), true),
+            new APPacket.TeleportViewRequest(location),
             new APPacket.ChunkloadRequest(),
             new APPacket.ChunkloadData("minecraft:overworld",List.of(new ChunkCoordinates(-2,7),new ChunkCoordinates(2,9))),
             new APPacket.ValueUpdate(APMessageType.PRIORITY_UPDATE,location,(byte)5,3),
@@ -132,6 +135,10 @@ public final class InfrastructureRegression {
             try { APProtocol.decode(withJunk,packet.type().serverbound()); throw new AssertionError("trailing byte accepted"); }
             catch (IOException expected) { checks++; }
         }
+        rejects(()->new APPacket.TeleportUpdate(location,1_000_000,false,(byte)1),
+            "Teleport GUI frequency above maximum");
+        rejects(()->new APPacket.TeleportView(location,-1,(byte)1,true,"Player","ITEMS",0,List.of(),true),
+            "Invalid GUI state rejected");
         try { APProtocol.decode(new byte[]{(byte)255,0},true); throw new AssertionError("Invalid version accepted"); }
         catch (IOException expected) { checks++; }
         try { APProtocol.decode(new byte[APProtocol.MAX_PACKET_BYTES+1],true); throw new AssertionError("oversized packet accepted"); }

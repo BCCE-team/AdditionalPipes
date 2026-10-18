@@ -1,18 +1,25 @@
-param(
+﻿param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]] $GradleArgs
 )
-$ErrorActionPreference = 'Stop'
+
+$ErrorActionPreference = "Stop"
 $RepositoryRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $GradleArgs -or $GradleArgs.Count -eq 0) {
-    $GradleArgs = @('buildAndCollect')
+    $GradleArgs = @("buildAndCollect")
 }
-foreach ($Generation in @('old', '1.21.X', '26.X')) {
-    Write-Host "==> Additional Pipes $Generation: $($GradleArgs -join ' ')"
-    Push-Location (Join-Path $RepositoryRoot "builds/$Generation")
+
+foreach ($Generation in @("old", "1.21.X", "26.X")) {
+    $BuildRoot = Join-Path $RepositoryRoot "builds/$Generation"
+    Write-Host "==> Running $Generation Additional Pipes build: $($GradleArgs -join ' ')"
+    Push-Location $BuildRoot
     try {
         & .\gradlew.bat @GradleArgs
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+        }
     }
-    finally { Pop-Location }
+    finally {
+        Pop-Location
+    }
 }

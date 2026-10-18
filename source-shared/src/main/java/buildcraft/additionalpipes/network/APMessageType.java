@@ -4,7 +4,8 @@ package buildcraft.additionalpipes.network;
 public enum APMessageType {
     DISTRIBUTION_UPDATE(0, true), TELEPORT_UPDATE(1, true), ADVANCED_WOOD_UPDATE(2, true),
     TELEPORT_DATA(3, false), CHUNKLOAD_REQUEST(4, true), CHUNKLOAD_DATA(5, false),
-    PRIORITY_UPDATE(6, true), JEWELED_UPDATE_SERVER(7, true), JEWELED_UPDATE_CLIENT(8, false);
+    PRIORITY_UPDATE(6, true), JEWELED_UPDATE_SERVER(7, true), JEWELED_UPDATE_CLIENT(8, false),
+    TELEPORT_VIEW(9, false), TELEPORT_VIEW_REQUEST(10, true);
 
     private final int id;
     private final boolean serverbound;

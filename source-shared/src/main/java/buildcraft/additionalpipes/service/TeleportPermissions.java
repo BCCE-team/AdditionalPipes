@@ -18,7 +18,7 @@ public final class TeleportPermissions {
     public static boolean mayConnect(ITeleportPipe source, ITeleportPipe destination) {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(destination, "destination");
-        return source.isPublic() ? destination.isPublic()
-            : source.getOwnerUUID() != null && source.getOwnerUUID().equals(destination.getOwnerUUID());
+        return source.isPublic() == destination.isPublic() && (source.isPublic()
+            || source.getOwnerUUID() != null && source.getOwnerUUID().equals(destination.getOwnerUUID()));
     }
 }

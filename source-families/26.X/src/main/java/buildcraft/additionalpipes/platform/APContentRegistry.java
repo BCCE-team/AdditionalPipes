@@ -2,6 +2,9 @@ package buildcraft.additionalpipes.platform;
 
 import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.content.APContent;
+import buildcraft.additionalpipes.pipes.APSwitchPipes;
+import buildcraft.additionalpipes.pipes.APTeleportPipes;
+import buildcraft.lib.compat.minecraft.registry.BCRegistrationScope;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -27,6 +30,10 @@ public final class APContentRegistry {
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id)) {
+                ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> APSwitchPipes.isSwitch(id) ? APSwitchPipes.createItem(id) : APTeleportPipes.createItem(id))));
+                continue;
+            }
             Supplier<? extends Block> block = BLOCKS.register(id, () -> new Block(
                 BlockBehaviour.Properties.of().setId(ResourceKey.create(Registries.BLOCK,
                     Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)))

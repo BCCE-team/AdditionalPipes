@@ -14,9 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Classic frequency routing with original public/private semantics. Registry is scoped to
- * one logical server by APServices; it is cleared on server shutdown and world switch.
- * Never resolves unloaded block entities or stores Minecraft level references.
+ * Frequency channels scoped to one server. Unloaded pipes are not resolved by the registry.
  */
 public final class TeleportManager extends TeleportManagerBase {
     private record Channel(PipeType type, int frequency) { }
@@ -66,9 +64,8 @@ public final class TeleportManager extends TeleportManagerBase {
         for (ITeleportPipe other : members) {
             if (other == pipe || !other.isValid()) continue;
             if (!((includeSend && other.canSend()) || (includeReceive && other.canReceive()))) continue;
-            // Reproduce AP 4.7.7: public connects only to public; private only to matching owners.
-            if (pipe.isPublic() ? other.isPublic()
-                : pipe.getOwnerUUID() != null && pipe.getOwnerUUID().equals(other.getOwnerUUID())) {
+            if (pipe.isPublic() == other.isPublic()
+                && (pipe.isPublic() || pipe.getOwnerUUID() != null && pipe.getOwnerUUID().equals(other.getOwnerUUID()))) {
                 @SuppressWarnings("unchecked") T candidate = (T) other;
                 result.add(candidate);
             }

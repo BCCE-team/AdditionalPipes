@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "additionalpipes:pipe_power_switch"
+    },
+    {
+      "item": "buildcrafttransport:gold_fe"
+    }
+  ],
+  "result": {
+    "item": "additionalpipes:pipe_fe_switch"
+  }
+}

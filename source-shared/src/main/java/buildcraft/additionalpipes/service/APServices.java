@@ -9,10 +9,12 @@ import buildcraft.additionalpipes.network.APMessageType;
 import buildcraft.additionalpipes.network.APPacket;
 import buildcraft.additionalpipes.network.ChunkloadRequestHandler;
 import buildcraft.additionalpipes.pipes.TeleportManager;
+import buildcraft.additionalpipes.pipes.TeleportUiServer;
 import buildcraft.additionalpipes.utils.Log;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import net.minecraft.server.MinecraftServer;
 
 /** Service lifetime is tied to a logical Minecraft server, not to client/server classloading. */
 public final class APServices {
@@ -21,6 +23,7 @@ public final class APServices {
     private static final ChunkLoadViewDataProxy CHUNK_VIEW = new ChunkLoadViewDataProxy();
     private static final PacketHandler PACKETS = new PacketHandler();
     private static Path saveRoot;
+    private static MinecraftServer activeServer;
     private static boolean initialized;
 
     private APServices() { }
@@ -33,15 +36,21 @@ public final class APServices {
         if (initialized) return;
         try { APConfiguration.load(Objects.requireNonNull(configDirectory, "configDirectory")); }
         catch (IOException e) { throw new IllegalStateException("Cannot load Additional Pipes config", e); }
+        PACKETS.registerServerHandler(APMessageType.TELEPORT_UPDATE,
+            TeleportUiServer::authorized, TeleportUiServer::apply);
+        PACKETS.registerServerHandler(APMessageType.TELEPORT_VIEW_REQUEST,
+            TeleportUiServer::authorizedViewRequest, TeleportUiServer::refresh);
         PACKETS.registerClientHandler(APMessageType.CHUNKLOAD_DATA, packet -> {
             APPacket.ChunkloadData data = (APPacket.ChunkloadData) packet;
             CHUNK_VIEW.receive(data.dimension(), data.chunks());
         });
         initialized = true;
-        Log.info("Additional Pipes service layer initialized (no gameplay content registered)");
+        Log.info("Additional Pipes service layer initialized");
     }
 
-    public static synchronized void serverStarted(Path root) {
+    public static MinecraftServer server() { return activeServer; }
+
+    public static synchronized void serverStarted(Path root, MinecraftServer server) {
         Objects.requireNonNull(root, "root");
         if (saveRoot != null) serverStopped();
         BCCEIntegration.verifyRuntime();
@@ -49,7 +58,9 @@ public final class APServices {
         CHUNKS.clearTracking();
         CHUNK_VIEW.reset();
         ChunkloadRequestHandler.reset();
+        TeleportUiServer.reset();
         saveRoot = root.toAbsolutePath().normalize();
+        activeServer = Objects.requireNonNull(server, "server");
         try { TeleportFrequencyStore.load(saveRoot, TELEPORTS); }
         catch (IOException e) { Log.error("Failed to load teleport frequency names", e); }
     }
@@ -64,6 +75,8 @@ public final class APServices {
         TELEPORTS.reset();
         CHUNK_VIEW.reset();
         ChunkloadRequestHandler.reset();
+        TeleportUiServer.reset();
         saveRoot = null;
+        activeServer = null;
     }
 }

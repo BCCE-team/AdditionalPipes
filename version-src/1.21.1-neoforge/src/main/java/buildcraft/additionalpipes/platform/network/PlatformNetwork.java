@@ -1,6 +1,7 @@
 package buildcraft.additionalpipes.platform.network;
 
 import buildcraft.additionalpipes.AdditionalPipes;
+import buildcraft.additionalpipes.client.APClientPackets;
 import buildcraft.additionalpipes.network.APPacket;
 import buildcraft.additionalpipes.network.APProtocol;
 import buildcraft.additionalpipes.network.ChunkloadRequestHandler;
@@ -43,7 +44,7 @@ public final class PlatformNetwork {
     }
 
     private static void handleClientbound(WirePayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> APServices.packets().receive(payload.bytes(), false, null));
+        context.enqueueWork(() -> APClientPackets.receive(payload.bytes()));
     }
 
     private static void handleServerbound(WirePayload payload, IPayloadContext context) {

@@ -2,6 +2,7 @@ package buildcraft.additionalpipes.chunkloader;
 
 import buildcraft.additionalpipes.APConfiguration;
 import buildcraft.additionalpipes.api.PipeLocation;
+import buildcraft.additionalpipes.platform.APDimensionIds;
 import buildcraft.additionalpipes.platform.chunk.PlatformChunkTickets;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,6 +71,6 @@ public final class ChunkLoadingService {
     public synchronized void clearTracking() { active.clear(); }
 
     private static Owner key(ServerLevel level, BlockPos pos) {
-        return new Owner(new PipeLocation(String.valueOf(level.dimension().location()), pos.getX(), pos.getY(), pos.getZ()));
+        return new Owner(new PipeLocation(APDimensionIds.of(level), pos.getX(), pos.getY(), pos.getZ()));
     }
 }

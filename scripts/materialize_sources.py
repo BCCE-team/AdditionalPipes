@@ -60,9 +60,69 @@ def get_source_layers(target: str, properties: dict[str, str]):
     return output
 
 
+
+def _modern_ingredient(value):
+    if isinstance(value, dict):
+        if set(value) == {'item'} and isinstance(value['item'], str):
+            return value['item']
+        if set(value) == {'tag'} and isinstance(value['tag'], str):
+            return '#' + value['tag']
+        result = {name: _modern_ingredient(child) for name, child in value.items()}
+        if isinstance(result.get('type'), str) and ':' in result['type']:
+            if 'neoforge:ingredient_type' not in result:
+                result['neoforge:ingredient_type'] = result.pop('type')
+        return result
+    if isinstance(value, list):
+        return [_modern_ingredient(child) for child in value]
+    return value
+
+
+def _rewrite_modern_recipe(contents: bytes, path: str) -> bytes:
+    try:
+        recipe = json.loads(contents)
+    except (ValueError, UnicodeError) as exc:
+        raise ValueError(f'Invalid recipe {path}: {exc}') from exc
+    if not isinstance(recipe, dict):
+        raise ValueError(f'Invalid recipe {path}: expected JSON object')
+    recipe_type = recipe.get('type')
+    if recipe_type == 'minecraft:crafting_shaped' and isinstance(recipe.get('key'), dict):
+        recipe['key'] = _modern_ingredient(recipe['key'])
+    elif recipe_type in ('minecraft:crafting_shapeless', 'buildcraftsilicon:assembly'):
+        if isinstance(recipe.get('ingredients'), list):
+            recipe['ingredients'] = _modern_ingredient(recipe['ingredients'])
+    if recipe_type == 'buildcraftsilicon:assembly':
+        ingredients = recipe.get('ingredients')
+        counts = recipe.get('ingredient_counts')
+        if not isinstance(ingredients, list) or not isinstance(counts, list) or len(ingredients) != len(counts):
+            raise ValueError(f'Invalid assembly ingredients in {path}')
+    return (json.dumps(recipe, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
+
+
+def _rewrite_modern_pack(contents: bytes) -> bytes:
+    marker = b'"pack_format": ${pack_format},'
+    if marker not in contents:
+        raise ValueError('pack.mcmeta is missing its pack_format template')
+    return contents.replace(
+        marker,
+        marker + b'\n    "min_format": ${pack_format},\n    "max_format": ${pack_format},',
+    )
+
+
+def _rewrite_resource(contents: bytes, *, path: str, modern: bool) -> bytes:
+    if not modern:
+        return contents
+    if path == 'src/main/resources/pack.mcmeta':
+        return _rewrite_modern_pack(contents)
+    if path.startswith('src/main/resources/data/additionalpipes/recipe/') and path.endswith('.json'):
+        return _rewrite_modern_recipe(contents, path)
+    return contents
+
+
 def materialize(target: str, output: Path) -> dict:
     properties = config()
     layers = get_source_layers(target, properties)
+    minecraft = properties.get(f'target.{target}.deps.minecraft', target.split('-', 1)[0])
+    modern = tuple(map(int, minecraft.split('.'))) >= (1, 21, 11)
     output = output.resolve()
     # Refuse to delete canonical source trees (or their parents) even if an
     # incorrect Gradle/property argument accidentally points at a source dir.
@@ -91,8 +151,9 @@ def materialize(target: str, output: Path) -> dict:
     for rel, (src, name) in sorted(selected.items()):
         target_path = output/rel
         target_path.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copyfile(src, target_path)
-        manifest.append({'path': rel, 'source_layer': name, 'sha256': hashlib.sha256(src.read_bytes()).hexdigest()})
+        contents = _rewrite_resource(src.read_bytes(), path=rel, modern=modern)
+        target_path.write_bytes(contents)
+        manifest.append({'path': rel, 'source_layer': name, 'sha256': hashlib.sha256(contents).hexdigest()})
     report = {'target': target, 'layers': [name for name,_ in layers], 'files': manifest, 'overrides': overlays}
     (output/'source-manifest.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n', encoding='utf-8')
     return report

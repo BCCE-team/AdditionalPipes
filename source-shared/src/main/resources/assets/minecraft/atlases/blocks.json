@@ -1,0 +1,28 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/16"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/17"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/20"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/21"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/22"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "additionalpipes:block/23"
+    }
+  ]
+}

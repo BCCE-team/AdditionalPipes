@@ -2,13 +2,16 @@ package buildcraft.additionalpipes.platform;
 
 import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.content.APContent;
+import buildcraft.additionalpipes.pipes.APSwitchPipes;
+import buildcraft.additionalpipes.pipes.APTeleportPipes;
+import buildcraft.lib.compat.minecraft.registry.BCRegistrationScope;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -27,16 +30,20 @@ public final class APContentRegistry {
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id)) {
+                ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> APSwitchPipes.isSwitch(id) ? APSwitchPipes.createItem(id) : APTeleportPipes.createItem(id))));
+                continue;
+            }
             Supplier<? extends Block> block = BLOCKS.register(id, () -> new Block(
                 BlockBehaviour.Properties.of().setId(ResourceKey.create(Registries.BLOCK,
-                    ResourceLocation.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)))
+                    Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)))
                     .strength(0.6F).noOcclusion()));
             ALL_ITEMS.put(id, ITEMS.register(id, () -> new BlockItem(block.get(), new Item.Properties().setId(
-                ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id))))));
+                ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id))))));
         }
         ALL_ITEMS.put(APContent.DOG_DEAGGRAVATOR, ITEMS.register(APContent.DOG_DEAGGRAVATOR,
             () -> new Item(new Item.Properties().setId(
-                ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(AdditionalPipes.MOD_ID, APContent.DOG_DEAGGRAVATOR))))));
+                ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, APContent.DOG_DEAGGRAVATOR))))));
         TABS.register("additional_pipes", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.additionalpipes"))
             .icon(() -> new ItemStack(ALL_ITEMS.get("pipe_items_teleport").get()))

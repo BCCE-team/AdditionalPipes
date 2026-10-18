@@ -54,19 +54,35 @@ def check() -> None:
             assert 'APContentRegistry.java' in java_files, target
             assert 'APContent.java' in java_files, target
             assets = layout/'resources/assets/additionalpipes'
-            assert len(list((assets/'blockstates').glob('*.json'))) == 18, target
-            assert len(list((assets/'models/item').glob('*.json'))) == 19, target
-            assert len(list((assets/'textures/block').glob('*.png'))) == 42, target
+            assert len(list((assets/'blockstates').glob('*.json'))) == 20, target
+            assert len(list((assets/'models/item').glob('*.json'))) == 21, target
+            assert len(list((assets/'textures/block').glob('*.png'))) == 44, target
             assert (assets/'textures/item/dog_deaggravator.png').exists(), target
             lang = json.loads((assets/'lang/en_us.json').read_text())
-            assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 18, target
+            assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 20, target
             assert not (assets/'lang/ru_ru.json').exists(), target
             recipe_dir = layout/'resources/data/additionalpipes'/('recipes' if generation=='old' else 'recipe')
-            assert len(list(recipe_dir.glob('*.json'))) == 18, target
+            assert len(list(recipe_dir.glob('*.json'))) == 20, target
             assembly = recipe_dir/'assembly/pipe_items_teleport.json'
-            assert json.loads(assembly.read_text())['MJ'] == 10000000000, target
+            assembly_recipe = json.loads(assembly.read_text())
+            assert assembly_recipe['MJ'] == 10000000000, target
+            assert assembly_recipe['result']['count'] == 8, target
+            assert len(assembly_recipe['ingredients']) == len(assembly_recipe['ingredient_counts']), target
+            modern = target.startswith(('26.', '1.21.11'))
+            for recipe_path in recipe_dir.rglob('*.json'):
+                recipe = json.loads(recipe_path.read_text())
+                recipe_type = recipe['type']
+                if recipe_type == 'minecraft:crafting_shaped':
+                    ingredients = recipe['key'].values()
+                else:
+                    ingredients = recipe.get('ingredients', ())
+                for ingredient in ingredients:
+                    if modern:
+                        assert isinstance(ingredient, str) and ingredient, (target, recipe_path, ingredient)
+                    else:
+                        assert isinstance(ingredient, dict) and 'item' in ingredient, (target, recipe_path, ingredient)
             if target.startswith(('26.', '1.21.11')):
-                assert len(list((assets/'items').glob('*.json'))) == 19, target
+                assert len(list((assets/'items').glob('*.json'))) == 21, target
             assert 'AdditionalPipes.java' in java_files, target
             forge = 'AdditionalPipesForge.java' in java_files
             neo = 'AdditionalPipesNeoForge.java' in java_files
@@ -111,7 +127,12 @@ def check() -> None:
                 key={'pack.format':'pack_format','pack.resource_format':'resource_pack_format',
                      'pack.data_format':'data_pack_format'}[attr]
                 pack=pack.replace('${'+key+'}',p[f'{"target."+target}.{attr}'])
-            assert 'pack' in json.loads(pack),target
+            pack_values = json.loads(pack)['pack']
+            if modern:
+                assert pack_values['min_format'] == pack_values['pack_format'], target
+                assert pack_values['max_format'] == pack_values['pack_format'], target
+            else:
+                assert 'min_format' not in pack_values and 'max_format' not in pack_values, target
             assert report['layers'][0] == 'source-shared'
             assert report['layers'][-1] == f'version-src/{target}'
             print(f'OK {target:19s} | Java {java} | {len(report["files"])} source files | {loader} metadata and dependencies')

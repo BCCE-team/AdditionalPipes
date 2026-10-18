@@ -18,7 +18,7 @@ import java.util.UUID;
  * Checks version, direction, sizes and trailing bytes before server-thread dispatch.
  */
 public final class APProtocol {
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     public static final int MAX_PACKET_BYTES = 32768;
     private APProtocol() { }
 
@@ -41,6 +41,25 @@ public final class APProtocol {
                 out.writeBoolean(message.isPublic());
                 out.writeByte(message.operation());
             }
+            case TELEPORT_VIEW -> {
+                APPacket.TeleportView message = (APPacket.TeleportView) packet;
+                location(out, message.position());
+                out.writeInt(message.frequency());
+                out.writeByte(message.operation());
+                out.writeBoolean(message.isPublic());
+                out.writeBoolean(message.ownerUUID() != null);
+                if (message.ownerUUID() != null) {
+                    out.writeLong(message.ownerUUID().getMostSignificantBits());
+                    out.writeLong(message.ownerUUID().getLeastSignificantBits());
+                }
+                out.writeUTF(message.ownerName());
+                out.writeUTF(message.medium());
+                out.writeInt(message.connectedCount());
+                out.writeByte(message.connections().size());
+                for (PipeLocation connected : message.connections()) location(out, connected);
+                out.writeBoolean(message.open());
+            }
+            case TELEPORT_VIEW_REQUEST -> location(out, ((APPacket.TeleportViewRequest) packet).position());
             case ADVANCED_WOOD_UPDATE -> location(out, ((APPacket.AdvancedWoodUpdate) packet).position());
             case TELEPORT_DATA -> {
                 APPacket.TeleportData message = (APPacket.TeleportData) packet;
@@ -116,6 +135,23 @@ public final class APProtocol {
                 byte operation = in.readByte();
                 decoded = new APPacket.TeleportUpdate(location, frequency, publicAccess, operation);
             }
+            case TELEPORT_VIEW -> {
+                PipeLocation pos = location(in);
+                int frequency = in.readInt();
+                byte operation = in.readByte();
+                boolean publicAccess = in.readBoolean();
+                UUID ownerUUID = in.readBoolean() ? new UUID(in.readLong(), in.readLong()) : null;
+                String ownerName = limitedUtf(in, 64);
+                String medium = limitedUtf(in, 24);
+                int connectedCount = in.readInt();
+                int count = in.readUnsignedByte();
+                if (count > 3) throw new IOException("Invalid connected-pipe count");
+                List<PipeLocation> linked = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) linked.add(location(in));
+                decoded = new APPacket.TeleportView(pos, frequency, operation, publicAccess,
+                    ownerUUID, ownerName, medium, connectedCount, linked, in.readBoolean());
+            }
+            case TELEPORT_VIEW_REQUEST -> decoded = new APPacket.TeleportViewRequest(location(in));
             case ADVANCED_WOOD_UPDATE -> decoded = new APPacket.AdvancedWoodUpdate(location(in));
             case TELEPORT_DATA -> {
                 PipeLocation pos = location(in);

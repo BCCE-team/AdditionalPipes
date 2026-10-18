@@ -1,5 +1,6 @@
 """API-independent regression checks for AP source layering."""
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -40,6 +41,111 @@ target.1.19.2-forge.source.overlay_root=version-src/1.19.2-forge
             self.assertEqual((root/'build/selected/src/main/java/sample/Demo.java').read_text(),'target')
             self.assertEqual(len(report['overrides']),4)
             self.assertEqual((root/'source-shared/src/main/java/sample/Demo.java').read_text(),'base')
+
+    def test_dimension_access_for_each_target(self):
+        modern = {'1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge'}
+        targets = (
+            '1.19.2-forge', '1.20.1-forge', '1.21.1-neoforge',
+            '1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge',
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            for target in targets:
+                with self.subTest(target=target):
+                    effective = Path(tmp) / target
+                    module.materialize(target, effective)
+                    code = (effective / 'src/main/java/buildcraft/additionalpipes/platform/APDimensionIds.java').read_text()
+                    accessor = 'identifier()' if target in modern else 'location()'
+                    self.assertIn(f'level.dimension().{accessor}', code)
+                    if target.startswith('26.'):
+                        tickets = (effective / 'src/main/java/buildcraft/additionalpipes/platform/chunk/PlatformChunkTickets.java').read_text()
+                        self.assertIn('chunk.x(), chunk.z()', tickets)
+                        self.assertNotIn('chunk.x, chunk.z', tickets)
+                    if target == '1.21.11-neoforge':
+                        registry = (effective / 'src/main/java/buildcraft/additionalpipes/platform/APContentRegistry.java').read_text()
+                        self.assertIn('import net.minecraft.resources.Identifier;', registry)
+                        self.assertNotIn('ResourceLocation', registry)
+
+    def test_26x_registration_ids_and_layer(self):
+        for target in ('26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge'):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as tmp:
+                effective = Path(tmp) / target
+                report = module.materialize(target, effective)
+                path = 'src/main/java/buildcraft/additionalpipes/platform/APContentRegistry.java'
+                file = next(entry for entry in report['files'] if entry['path'] == path)
+                self.assertEqual(file['source_layer'], 'source-family-platforms/26.X/neoforge')
+                registry = (effective / path).read_text()
+                self.assertIn('BlockBehaviour.Properties.of().setId(', registry)
+                self.assertIn('new Item.Properties().setId(', registry)
+                self.assertIn('BCRegistrationScope.item(', registry)
+                self.assertIn('BLOCKS.register(bus);', registry)
+                self.assertIn('ITEMS.register(bus);', registry)
+
+    def test_teleport_screen_background_signature_by_target(self):
+        targets = (
+            '1.19.2-forge', '1.20.1-forge', '1.21.1-neoforge',
+            '1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge',
+        )
+        screen_path = 'src/main/java/buildcraft/additionalpipes/client/TeleportConfigScreen.java'
+        signatures = {
+            '1.19.2-forge': 'renderBackground(graphics);',
+            '1.20.1-forge': 'renderBackground(graphics);',
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            for target in targets:
+                with self.subTest(target=target):
+                    selected = Path(temp) / target
+                    module.materialize(target, selected)
+                    source = (selected / screen_path).read_text()
+                    if target.startswith('26.'):
+                        self.assertIn('import net.minecraft.client.gui.GuiGraphicsExtractor;', source)
+                        self.assertIn('void extractBackground(GuiGraphicsExtractor graphics,', source)
+                        self.assertIn('void extractRenderState(GuiGraphicsExtractor graphics,', source)
+                        self.assertIn('super.extractBackground(graphics, mouseX, mouseY, partialTick);', source)
+                        self.assertIn('super.extractRenderState(graphics, mouseX, mouseY, partialTick);', source)
+                        self.assertIn('graphics.text(font, screenTitle(),', source)
+                        self.assertNotIn('GuiGraphics;', source)
+                        self.assertNotIn('renderBackground(', source)
+                        manifest = json.loads((selected / 'source-manifest.json').read_text())
+                        layer = next(entry['source_layer'] for entry in manifest['files']
+                                     if entry['path'] == screen_path)
+                        self.assertEqual(layer, 'source-family-platforms/26.X/neoforge')
+                    else:
+                        expected = signatures.get(target, 'renderBackground(graphics, mouseX, mouseY, partialTick);')
+                        self.assertIn(expected, source)
+                        self.assertEqual(source.count('renderBackground('), 1)
+
+    def test_teleport_screen_mouse_click_api_by_target(self):
+        targets = (
+            '1.19.2-forge', '1.20.1-forge', '1.21.1-neoforge',
+            '1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge',
+        )
+        screen_path = 'src/main/java/buildcraft/additionalpipes/client/TeleportConfigScreen.java'
+        buttons_path = 'src/main/java/buildcraft/additionalpipes/client/APMouseButtons.java'
+        with tempfile.TemporaryDirectory() as temp:
+            for target in targets:
+                with self.subTest(target=target):
+                    selected = Path(temp) / target
+                    report = module.materialize(target, selected)
+                    source = (selected / screen_path).read_text()
+                    if target == '1.21.11-neoforge' or target.startswith('26.'):
+                        self.assertIn('import net.minecraft.client.input.MouseButtonEvent;', source)
+                        self.assertIn('public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)', source)
+                        self.assertIn('return super.mouseClicked(event, doubleClick);', source)
+                        self.assertNotIn('super.mouseClicked(mouseX, mouseY, button)', source)
+                    else:
+                        self.assertIn('public boolean mouseClicked(double mouseX, double mouseY, int button)', source)
+                        self.assertIn('return super.mouseClicked(mouseX, mouseY, button);', source)
+                    if target.startswith('26.'):
+                        self.assertIn('APMouseButtons.legacy(event.button())', source)
+                        buttons = (selected / buttons_path).read_text()
+                        layer = next(entry['source_layer'] for entry in report['files']
+                                     if entry['path'] == buttons_path)
+                        if target == '26.3-neoforge':
+                            self.assertIn('BCGuiInput.legacyButton(button)', buttons)
+                            self.assertEqual(layer, 'version-src/26.3-neoforge')
+                        else:
+                            self.assertIn('return button;', buttons)
+                            self.assertEqual(layer, 'source-family-platforms/26.X/neoforge')
 
     def test_reject_unknown_target(self):
         with self.assertRaises(ValueError):

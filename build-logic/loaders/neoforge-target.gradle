@@ -32,11 +32,14 @@ repositories {
     mavenCentral()
 }
 
+def localBcceRuntime = configurations.maybeCreate('localRuntime')
+localBcceRuntime.canBeConsumed = false
+localBcceRuntime.canBeResolved = false
+configurations.runtimeClasspath.extendsFrom(localBcceRuntime)
+
 dependencies {
     compileOnly ap.bcceCoordinates
-    // ModDev's localRuntime lets the BCCE jar load during client/server dev runs
-    // without accidentally distributing it inside the Additional Pipes artifact.
-    localRuntime ap.bcceCoordinates
+    add(localBcceRuntime.name, ap.bcceCoordinates)
 }
 
 tasks.register('buildAndCollect') {

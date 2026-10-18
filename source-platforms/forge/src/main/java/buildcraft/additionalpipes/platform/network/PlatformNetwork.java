@@ -1,6 +1,7 @@
 package buildcraft.additionalpipes.platform.network;
 
 import buildcraft.additionalpipes.AdditionalPipes;
+import buildcraft.additionalpipes.client.APClientPackets;
 import buildcraft.additionalpipes.network.APPacket;
 import buildcraft.additionalpipes.network.APProtocol;
 import buildcraft.additionalpipes.network.ChunkloadRequestHandler;
@@ -44,7 +45,7 @@ public final class PlatformNetwork {
             buf -> new ClientPayload(buf.readByteArray(APProtocol.MAX_PACKET_BYTES)),
             (p, supplier) -> {
                 var context = supplier.get();
-                context.enqueueWork(() -> APServices.packets().receive(p.bytes(), false, null));
+                context.enqueueWork(() -> APClientPackets.receive(p.bytes()));
                 context.setPacketHandled(true);
             }, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         registered = true;
