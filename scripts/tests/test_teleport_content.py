@@ -73,7 +73,7 @@ class TeleportContentTests(unittest.TestCase):
                     self.assertEqual(fe_model['textures']['pipe'], 'additionalpipes:block/43')
                     self.assertEqual(fe_model['elements'][0]['from'], [4, 0, 4])
                     self.assertEqual(fe_model['elements'][0]['to'], [12, 16, 12])
-                    self.assertFalse((res / 'assets/additionalpipes/textures/block/43.png').exists())
+                    self.assertTrue((res / 'assets/additionalpipes/textures/block/43.png').exists())
                     fe_recipe = json.loads((res / f'data/additionalpipes/{recipe_dir}/pipe_fe_teleport.json').read_text())
                     expected = ['additionalpipes:pipe_power_teleport', 'buildcrafttransport:gold_fe']
                     ingredients = [part if isinstance(part, str) else part['item'] for part in fe_recipe['ingredients']]

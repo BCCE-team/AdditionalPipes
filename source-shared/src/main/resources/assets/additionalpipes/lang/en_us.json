@@ -55,5 +55,7 @@
   "pipe.additionalpipes.pipe_items_teleport": "Item Teleport Pipe",
   "pipe.additionalpipes.pipe_fluids_teleport": "Fluid Teleport Pipe",
   "pipe.additionalpipes.pipe_power_teleport": "Power Teleport Pipe",
-  "pipe.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe"
+  "pipe.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe",
+  "pipe.additionalpipes.pipe_items_adv_wood": "Adv. Wooden Transport Pipe",
+  "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe"
 }

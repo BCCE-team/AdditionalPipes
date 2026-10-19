@@ -4,6 +4,10 @@ import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.content.APContent;
 import buildcraft.additionalpipes.pipes.APSwitchPipes;
 import buildcraft.additionalpipes.pipes.APTeleportPipes;
+import buildcraft.additionalpipes.pipes.APInsertionPipes;
+import buildcraft.additionalpipes.pipes.AdvancedWoodMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.flag.FeatureFlags;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.core.registries.Registries;
@@ -22,14 +26,17 @@ import net.minecraftforge.registries.RegistryObject;
 public final class APContentRegistry {
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, AdditionalPipes.MOD_ID);
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, AdditionalPipes.MOD_ID);
+    private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, AdditionalPipes.MOD_ID);
+    public static final RegistryObject<MenuType<AdvancedWoodMenu>> ADVANCED_WOOD_MENU =
+        MENUS.register("advanced_wood", () -> new MenuType<>(AdvancedWoodMenu::new, FeatureFlags.DEFAULT_FLAGS));
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, AdditionalPipes.MOD_ID);
     private static final Map<String, RegistryObject<Item>> ALL_ITEMS = new LinkedHashMap<>();
 
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
-            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id)) {
-                ALL_ITEMS.put(id, ITEMS.register(id, () -> APSwitchPipes.isSwitch(id) ? APSwitchPipes.createItem(id) : APTeleportPipes.createItem(id)));
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id)) {
+                ALL_ITEMS.put(id, ITEMS.register(id, () -> APSwitchPipes.isSwitch(id) ? APSwitchPipes.createItem(id) : APTeleportPipes.isTeleport(id) ? APTeleportPipes.createItem(id) : APInsertionPipes.createItem(id)));
                 continue;
             }
             RegistryObject<Block> block = BLOCKS.register(id, () -> new Block(
@@ -50,6 +57,7 @@ public final class APContentRegistry {
     public static void register(IEventBus bus) {
         BLOCKS.register(bus);
         ITEMS.register(bus);
+        MENUS.register(bus);
         TABS.register(bus);
     }
 }

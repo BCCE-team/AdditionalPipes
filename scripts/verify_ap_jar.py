@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 import sys
 import tomllib
@@ -18,6 +19,11 @@ def verify(target: str, path: Path):
     loader=p[f'target.{target}.source.platform']
     with zipfile.ZipFile(path) as z:
         names=set(z.namelist())
+        for name in names:
+            if name.startswith('assets/additionalpipes/'):
+                assert re.fullmatch(r'[a-z0-9/._-]+', name), f'{target}: invalid resource path {name}'
+        for texture in ('advanced_wood_gui.png', 'priority_gui.png'):
+            assert f'assets/additionalpipes/textures/gui/{texture}' in names, f'{target}: missing GUI texture {texture}'
         assert 'buildcraft/additionalpipes/AdditionalPipes.class' in names, 'AP entrypoint missing'
         for required in ('service/APServices.class', 'service/BCCEIntegration.class',
                          'pipes/TeleportManager.class', 'network/APProtocol.class',

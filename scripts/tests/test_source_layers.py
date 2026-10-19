@@ -147,6 +147,88 @@ target.1.19.2-forge.source.overlay_root=version-src/1.19.2-forge
                             self.assertIn('return button;', buttons)
                             self.assertEqual(layer, 'source-family-platforms/26.X/neoforge')
 
+    def test_1192_registry_access_for_insertion_pipes(self):
+        files = (
+            'src/main/java/buildcraft/additionalpipes/pipes/AdvancedWoodComponent.java',
+            'src/main/java/buildcraft/additionalpipes/pipes/APInsertionUiServer.java',
+            'src/main/java/buildcraft/additionalpipes/client/InsertionConfigScreen.java',
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / '1.19.2-forge'
+            manifest = module.materialize('1.19.2-forge', target)
+            layers = {entry['path']: entry['source_layer'] for entry in manifest['files']}
+            for filename in files:
+                with self.subTest(file=filename):
+                    code = (target / filename).read_text()
+                    self.assertEqual(layers[filename], 'version-src/1.19.2-forge')
+                    self.assertNotIn('BuiltInRegistries', code)
+            self.assertIn('ForgeRegistries.ITEMS.getKey(', (target / files[0]).read_text())
+            advanced = (target / files[0]).read_text()
+            self.assertIn('ForgeRegistries.ITEMS.getValues()', advanced)
+            self.assertIn('public MjPort energyPort()', advanced)
+            for other in ('1.20.1-forge', '1.21.1-neoforge', '1.21.11-neoforge',
+                          '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge'):
+                with self.subTest(target=other):
+                    result = Path(tmp) / other
+                    module.materialize(other, result)
+                    self.assertIn('BuiltInRegistries.ITEM.getKey(', (result / files[0]).read_text())
+
+    def test_insertion_item_capabilities_by_target(self):
+        path = 'src/main/java/buildcraft/additionalpipes/pipes/APItemPorts.java'
+        targets = (
+            '1.19.2-forge', '1.20.1-forge', '1.21.1-neoforge',
+            '1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge',
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            for target in targets:
+                with self.subTest(target=target):
+                    effective = Path(tmp) / target
+                    manifest = module.materialize(target, effective)
+                    sources = {entry['path']: entry['source_layer'] for entry in manifest['files']}
+                    source = (effective / path).read_text()
+                    if target == '1.21.11-neoforge' or target.startswith('26.'):
+                        expected_layer = ('version-src/1.21.11-neoforge' if target == '1.21.11-neoforge'
+                                          else 'source-family-platforms/26.X/neoforge')
+                        self.assertEqual(sources[path], expected_layer)
+                        self.assertIn('import buildcraft.lib.misc.CapUtil;', source)
+                        self.assertIn('var items = CapUtil.getItemHandler(level, pos, side);', source)
+                        self.assertIn('CapUtil.getItemHandler(level, pos, side) != null', source)
+                        self.assertIn('items.insertItem(slot, stack.copy(), true)', source)
+                        self.assertNotIn('Capabilities.ItemHandler.BLOCK', source)
+                        self.assertNotIn('import net.neoforged.neoforge.items.IItemHandler;', source)
+                    elif target == '1.21.1-neoforge':
+                        self.assertEqual(sources[path], 'source-platforms/neoforge')
+                        self.assertIn('Capabilities.ItemHandler.BLOCK', source)
+                    else:
+                        self.assertEqual(sources[path], 'source-platforms/forge')
+                        self.assertIn('ForgeCapabilities.ITEM_HANDLER', source)
+
+    def test_player_drop_prediction_by_target(self):
+        targets = (
+            '1.19.2-forge', '1.20.1-forge', '1.21.1-neoforge',
+            '1.21.11-neoforge', '26.1.2-neoforge', '26.2-neoforge', '26.3-neoforge',
+        )
+        adapter = 'src/main/java/buildcraft/additionalpipes/platform/APPlayerDrops.java'
+        server = 'src/main/java/buildcraft/additionalpipes/pipes/APInsertionUiServer.java'
+        with tempfile.TemporaryDirectory() as tmp:
+            for target in targets:
+                with self.subTest(target=target):
+                    output = Path(tmp) / target
+                    report = module.materialize(target, output)
+                    layers = {entry['path']: entry['source_layer'] for entry in report['files']}
+                    adapter_source = (output / adapter).read_text()
+                    server_source = (output / server).read_text()
+                    if target == '26.3-neoforge':
+                        self.assertEqual(layers[adapter], 'version-src/26.3-neoforge')
+                        self.assertIn('import net.minecraft.util.Prediction;', adapter_source)
+                        self.assertIn('player.drop(stack, false, Prediction.SERVER_ONLY);', adapter_source)
+                    else:
+                        self.assertEqual(layers[adapter], 'source-shared')
+                        self.assertIn('player.drop(stack, false);', adapter_source)
+                        self.assertNotIn('Prediction', adapter_source)
+                    self.assertNotIn('APPlayerDrops.drop(player, returned);', server_source)
+                    self.assertIn('APAdvancedWoodMenuAccess.open(', server_source)
+
     def test_reject_unknown_target(self):
         with self.assertRaises(ValueError):
             module.get_source_layers('missing',module.config())

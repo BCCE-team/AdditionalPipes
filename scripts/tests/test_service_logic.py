@@ -14,10 +14,13 @@ SHARED = ROOT / 'source-shared/src/main/java'
 EXCLUDE = {
     'AdditionalPipes.java', 'APServices.java', 'BCCEIntegration.java',
     'ChunkLoadingService.java', 'ChunkLoadingHandler.java',
-    'ChunkloadRequestHandler.java', 'APDimensionIds.java', 'APPlayerLevel.java', 'PlayerUtils.java',
+    'ChunkloadRequestHandler.java', 'APDimensionIds.java', 'APPlayerLevel.java', 'APPlayerDrops.java', 'PlayerUtils.java',
     'APSwitchPipes.java', 'SwitchPipeBehaviour.java',
     'APTeleportPipes.java', 'TeleportPipeComponent.java',
     'TeleportUiServer.java', 'TeleportConfigScreen.java', 'APClientPackets.java', 'APClientScreenAccess.java',
+    'InsertionConfigScreen.java', 'APInsertionPipes.java', 'PriorityInsertionComponent.java',
+    'AdvancedWoodComponent.java', 'APInsertionUiServer.java', 'APPriorityBehaviour.java',
+    'APAdvancedWoodBehaviourBase.java', 'AdvancedWoodMenu.java', 'AdvancedWoodScreen.java', 'APAdvancedWoodStackIO.java',
 }
 
 

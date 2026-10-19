@@ -18,7 +18,7 @@ import java.util.UUID;
  * Checks version, direction, sizes and trailing bytes before server-thread dispatch.
  */
 public final class APProtocol {
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
     public static final int MAX_PACKET_BYTES = 32768;
     private APProtocol() { }
 
@@ -60,6 +60,28 @@ public final class APProtocol {
                 out.writeBoolean(message.open());
             }
             case TELEPORT_VIEW_REQUEST -> location(out, ((APPacket.TeleportViewRequest) packet).position());
+            case INSERTION_VIEW -> {
+                APPacket.InsertionView view = (APPacket.InsertionView) packet;
+                location(out, view.position());
+                out.writeBoolean(view.priority());
+                out.writeBoolean(view.excluded());
+                out.writeShort(view.energy());
+                out.writeByte(view.sourceFace());
+                for (int weight : view.priorities()) out.writeByte(weight);
+                for (int i = 0; i < 9; i++) {
+                    out.writeUTF(view.filters().get(i));
+                    out.writeShort(view.damages().get(i));
+                }
+                out.writeBoolean(view.open());
+            }
+            case INSERTION_VIEW_REQUEST -> location(out, ((APPacket.InsertionViewRequest) packet).position());
+            case ADVANCED_WOOD_FILTER -> {
+                APPacket.AdvancedWoodFilterUpdate update = (APPacket.AdvancedWoodFilterUpdate) packet;
+                location(out, update.position());
+                out.writeByte(update.slot());
+                out.writeUTF(update.item());
+                out.writeShort(update.damage());
+            }
             case ADVANCED_WOOD_UPDATE -> location(out, ((APPacket.AdvancedWoodUpdate) packet).position());
             case TELEPORT_DATA -> {
                 APPacket.TeleportData message = (APPacket.TeleportData) packet;
@@ -152,6 +174,26 @@ public final class APProtocol {
                     ownerUUID, ownerName, medium, connectedCount, linked, in.readBoolean());
             }
             case TELEPORT_VIEW_REQUEST -> decoded = new APPacket.TeleportViewRequest(location(in));
+            case INSERTION_VIEW -> {
+                PipeLocation pos = location(in);
+                boolean priority = in.readBoolean();
+                boolean excluded = in.readBoolean();
+                int energy = in.readUnsignedShort();
+                int sourceFace = in.readUnsignedByte();
+                List<Integer> weights = new ArrayList<>(6);
+                for (int i = 0; i < 6; i++) weights.add(in.readUnsignedByte());
+                List<String> filters = new ArrayList<>(9);
+                List<Integer> damages = new ArrayList<>(9);
+                for (int i = 0; i < 9; i++) {
+                    filters.add(limitedUtf(in, 128));
+                    damages.add(in.readUnsignedShort());
+                }
+                decoded = new APPacket.InsertionView(pos, priority, excluded, energy, sourceFace,
+                    weights, filters, damages, in.readBoolean());
+            }
+            case INSERTION_VIEW_REQUEST -> decoded = new APPacket.InsertionViewRequest(location(in));
+            case ADVANCED_WOOD_FILTER -> decoded = new APPacket.AdvancedWoodFilterUpdate(
+                location(in), in.readUnsignedByte(), limitedUtf(in, 128), in.readUnsignedShort());
             case ADVANCED_WOOD_UPDATE -> decoded = new APPacket.AdvancedWoodUpdate(location(in));
             case TELEPORT_DATA -> {
                 PipeLocation pos = location(in);

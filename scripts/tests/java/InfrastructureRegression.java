@@ -121,6 +121,12 @@ public final class InfrastructureRegression {
             new APPacket.ChunkloadRequest(),
             new APPacket.ChunkloadData("minecraft:overworld",List.of(new ChunkCoordinates(-2,7),new ChunkCoordinates(2,9))),
             new APPacket.ValueUpdate(APMessageType.PRIORITY_UPDATE,location,(byte)5,3),
+            new APPacket.AdvancedWoodFilterUpdate(location, 3, "minecraft:iron_ingot", 0),
+            new APPacket.InsertionViewRequest(location),
+            new APPacket.InsertionView(location, false, true, 32, 5,
+                List.of(1, 2, 3, 4, 5, 6),
+                List.of("minecraft:iron_ingot", "", "", "", "", "", "", "", ""),
+                List.of(0, 0, 0, 0, 0, 0, 0, 0, 0), true),
             new APPacket.JeweledServerUpdate(location,(byte)6,options),
             new APPacket.JeweledClientUpdate(location,List.of(options,options,options,options,options,options))
         );

@@ -5,7 +5,8 @@ public enum APMessageType {
     DISTRIBUTION_UPDATE(0, true), TELEPORT_UPDATE(1, true), ADVANCED_WOOD_UPDATE(2, true),
     TELEPORT_DATA(3, false), CHUNKLOAD_REQUEST(4, true), CHUNKLOAD_DATA(5, false),
     PRIORITY_UPDATE(6, true), JEWELED_UPDATE_SERVER(7, true), JEWELED_UPDATE_CLIENT(8, false),
-    TELEPORT_VIEW(9, false), TELEPORT_VIEW_REQUEST(10, true);
+    TELEPORT_VIEW(9, false), TELEPORT_VIEW_REQUEST(10, true),
+    INSERTION_VIEW(11, false), INSERTION_VIEW_REQUEST(12, true), ADVANCED_WOOD_FILTER(13, true);
 
     private final int id;
     private final boolean serverbound;

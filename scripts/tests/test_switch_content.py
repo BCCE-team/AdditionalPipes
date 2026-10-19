@@ -70,5 +70,71 @@ class SwitchContentTests(unittest.TestCase):
                         self.assertTrue((effective / 'src/main/java/buildcraft/additionalpipes/platform/APSwitchSprites.java').is_file())
 
 
+    def test_advanced_wood_and_priority_insertion(self):
+        with tempfile.TemporaryDirectory(prefix='ap-insertion-resources-') as tmp:
+            for target in TARGETS:
+                with self.subTest(target=target):
+                    effective = Path(tmp) / target
+                    materialize(target, effective)
+                    src = effective / 'src/main/java/buildcraft/additionalpipes/pipes'
+                    modern = target.startswith('26.') or target == '1.21.11-neoforge'
+                    symbol = 'Identifier' if modern else 'ResourceLocation'
+                    registration = (src / 'APInsertionPipes.java').read_text()
+                    wood = (src / 'AdvancedWoodComponent.java').read_text()
+                    priority = (src / 'PriorityInsertionComponent.java').read_text()
+                    ui = (effective / 'src/main/java/buildcraft/additionalpipes/client/InsertionConfigScreen.java').read_text()
+                    for feature in ('PipeApi.flowItems', 'PipeComponentType',
+                                    'ADVANCED_WOOD', 'PRIORITY', 'PersistentType'):
+                        self.assertIn(feature, registration)
+                    self.assertIn(f'import net.minecraft.resources.{symbol};', registration)
+                    self.assertIn(f'@Override public {symbol} typeId()', wood)
+                    self.assertIn(f'@Override public {symbol} typeId()', priority)
+                    for behaviour in ('CAPACITY = 64', 'ENERGY_PER_ITEM = 1',
+                                      'SLOW_INTERVAL = 16', 'FILTER_SLOTS = 9',
+                                      'itemPipePort(', 'OperationMode.SIMULATE', 'OperationMode.EXECUTE',
+                                      'isDamageableItem()', 'addDrops(', 'MjDemandPort', 'MjAmount',
+                                      'MjTransferResult', 'Optional<MjPort> mjPort(',
+                                      'ENERGY_PER_ITEM_MICRO_MJ', 'MICRO_MJ_PER_RF'):
+                        self.assertIn(behaviour, wood)
+                    self.assertNotIn('ExternalEnergyPort', wood)
+                    self.assertNotIn('externalEnergyPort(', wood)
+                    self.assertIn('textures/gui/priority_gui.png', ui)
+                    self.assertNotIn('640 FE', ui)
+                    self.assertIn('writeLong(value.energyMicroMj)', wood)
+                    self.assertIn('value.energyMicroMj = in.readUnsignedShort() * MICRO_MJ_PER_RF', wood)
+                    self.assertIn('energyMicroMj -= Math.min(moved, removed.getCount()) * ENERGY_PER_ITEM_MICRO_MJ', wood)
+                    self.assertIn('textures/gui/priority_gui.png', ui)
+                    self.assertIn('energy < 0 || energy > 64', (effective / 'src/main/java/buildcraft/additionalpipes/network/APPacket.java').read_text())
+                    power_base = (src / 'APAdvancedWoodBehaviourBase.java').read_text()
+                    power_platform = (src / 'APAdvancedWoodBehaviour.java').read_text()
+                    self.assertIn('PipeExternalEndpoint mjEndpoint', power_base)
+                    self.assertIn('ApiPortCapabilities.external(mjEndpoint, capability)', power_platform)
+                    self.assertNotIn('ForgeCapabilities.ENERGY', power_platform)
+                    self.assertNotIn('CapUtil.CAP_FE', power_platform)
+                    for behaviour in ('route(ItemRouteContext', 'for (int priority = 6; priority >= 1; priority--)',
+                                      'APItemPorts.canInsert(', 'Arrays.fill(priorities, 1)'):
+                        self.assertIn(behaviour, priority)
+                    self.assertIn('extends AbstractContainerMenu', (src / 'AdvancedWoodMenu.java').read_text())
+                    self.assertIn('new APPacket.ValueUpdate(', ui)
+                    self.assertIn('new APPacket.InsertionViewRequest(', ui)
+                    res = effective / 'src/main/resources'
+                    for filename in ('advanced_wood_gui.png', 'priority_gui.png'):
+                        self.assertTrue((res / f'assets/additionalpipes/textures/gui/{filename}').is_file())
+                        gui_source = (effective / 'src/main/java/buildcraft/additionalpipes/client' / ('AdvancedWoodScreen.java' if filename.startswith('advanced') else 'InsertionConfigScreen.java')).read_text()
+                        self.assertIn(f'textures/gui/{filename}', gui_source)
+                    for asset in (res / 'assets/additionalpipes').rglob('*'):
+                        if asset.is_file():
+                            identifier = asset.relative_to(res / 'assets/additionalpipes').as_posix()
+                            self.assertRegex(identifier, r'^[a-z0-9/._-]+$')
+                    for pipe in ('pipe_items_adv_wood', 'pipe_items_priority'):
+                        self.assertTrue((res / f'assets/additionalpipes/models/item/{pipe}.json').is_file())
+                    if target.startswith('26.'):
+                        self.assertIn('GuiGraphicsExtractor', ui)
+                    elif target == '1.19.2-forge':
+                        self.assertIn('PoseStack', ui)
+                    else:
+                        self.assertIn('GuiGraphics', ui)
+
+
 if __name__ == '__main__':
     unittest.main()

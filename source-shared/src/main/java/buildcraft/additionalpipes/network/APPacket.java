@@ -11,7 +11,8 @@ import java.util.UUID;
 public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.TeleportUpdate,
     APPacket.AdvancedWoodUpdate, APPacket.TeleportData, APPacket.ChunkloadRequest,
     APPacket.ChunkloadData, APPacket.JeweledServerUpdate, APPacket.JeweledClientUpdate,
-    APPacket.TeleportView, APPacket.TeleportViewRequest {
+    APPacket.TeleportView, APPacket.TeleportViewRequest, APPacket.InsertionView,
+    APPacket.InsertionViewRequest, APPacket.AdvancedWoodFilterUpdate {
 
     APMessageType type();
 
@@ -57,6 +58,44 @@ public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.Teleport
     record TeleportViewRequest(PipeLocation position) implements APPacket {
         public TeleportViewRequest { Objects.requireNonNull(position); }
         @Override public APMessageType type() { return APMessageType.TELEPORT_VIEW_REQUEST; }
+    }
+    record InsertionView(PipeLocation position, boolean priority, boolean excluded, int energy,
+                         int sourceFace, List<Integer> priorities, List<String> filters,
+                         List<Integer> damages, boolean open) implements APPacket {
+        public InsertionView {
+            Objects.requireNonNull(position);
+            Objects.requireNonNull(priorities);
+            Objects.requireNonNull(filters);
+            Objects.requireNonNull(damages);
+            if (priorities.size() != 6 || filters.size() != 9 || damages.size() != 9
+                || energy < 0 || energy > 64 || sourceFace < 0 || sourceFace > 6)
+                throw new IllegalArgumentException("Invalid insertion pipe view");
+            for (int weight : priorities) if (weight < 0 || weight > 6)
+                throw new IllegalArgumentException("Invalid priority value");
+            for (int i = 0; i < 9; i++) {
+                String name = Objects.requireNonNull(filters.get(i));
+                if (name.length() > 128 || damages.get(i) < 0 || damages.get(i) > 32767)
+                    throw new IllegalArgumentException("Invalid filter slot");
+            }
+            priorities = List.copyOf(priorities);
+            filters = List.copyOf(filters);
+            damages = List.copyOf(damages);
+        }
+        @Override public APMessageType type() { return APMessageType.INSERTION_VIEW; }
+    }
+    record InsertionViewRequest(PipeLocation position) implements APPacket {
+        public InsertionViewRequest { Objects.requireNonNull(position); }
+        @Override public APMessageType type() { return APMessageType.INSERTION_VIEW_REQUEST; }
+    }
+    record AdvancedWoodFilterUpdate(PipeLocation position, int slot, String item, int damage) implements APPacket {
+        public AdvancedWoodFilterUpdate {
+            Objects.requireNonNull(position);
+            Objects.requireNonNull(item);
+            if (slot < 0 || slot > 8 || item.length() > 128 || damage < 0 || damage > 32767
+                || !item.isEmpty() && !item.matches("[a-z0-9_.-]+:[a-z0-9_/.-]+"))
+                throw new IllegalArgumentException("Invalid advanced wood filter update");
+        }
+        @Override public APMessageType type() { return APMessageType.ADVANCED_WOOD_FILTER; }
     }
     record AdvancedWoodUpdate(PipeLocation position) implements APPacket {
         public AdvancedWoodUpdate { Objects.requireNonNull(position); }
