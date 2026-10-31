@@ -1,7 +1,6 @@
 package buildcraft.additionalpipes.pipes;
 
 import buildcraft.additionalpipes.APConfiguration;
-import buildcraft.additionalpipes.platform.APDimensionIds;
 import buildcraft.additionalpipes.service.APServices;
 import buildcraft.api.v2.BuildCraftApi;
 import buildcraft.api.v2.BuildCraftServices;
@@ -19,9 +18,10 @@ import buildcraft.api.v2.pipe.PipeMutationContext;
 import buildcraft.api.v2.pipe.PipeView;
 import buildcraft.api.v2.pipe.RouteDecision;
 import buildcraft.transport.internal.pipe.IItemPipe;
-import java.util.Arrays;
+import buildcraft.transport.internal.pipe.IPipe;
 import java.util.EnumMap;
-import java.util.Map;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,6 +29,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 public final class PriorityInsertionComponent implements ItemRouteComponent,
     PipeComponentLifecycle, PipeActivationComponent {
@@ -56,9 +57,6 @@ public final class PriorityInsertionComponent implements ItemRouteComponent,
         if (face < 0 || face >= 6 || value < 0 || value > 6) throw new IllegalArgumentException("Invalid priority");
         if (priorities[face] == value) return;
         priorities[face] = value;
-        boolean any = false;
-        for (int p : priorities) if (p > 0) any = true;
-        if (!any) Arrays.fill(priorities, 1);
         if (mutable != null && !mutable.isClientSide()) mutable.markChanged();
     }
 
@@ -80,32 +78,45 @@ public final class PriorityInsertionComponent implements ItemRouteComponent,
                 .flatMap(view -> view.component(typeId())).orElse(null) == this;
     }
 
+    private ServerLevel routingWorld(PipeView view) {
+        if (view instanceof IPipe runtime && runtime.getHolder().getPipeWorld() instanceof ServerLevel level) {
+            return level;
+        }
+        return locateWorld();
+    }
+
+    private EnumSet<Direction> availableDestinations(PipeView view, ServerLevel level,
+                                                      ItemStack stack, Set<Direction> candidates) {
+        EnumSet<Direction> selected = EnumSet.noneOf(Direction.class);
+        if (level == null || stack.isEmpty()) return selected;
+        BlockPos pos = view.position();
+        for (int priority = 6; priority >= 1; priority--) {
+            for (Direction side : Direction.values()) {
+                if (priorities[side.ordinal()] != priority || !candidates.contains(side)
+                    || view.endpoint(side) != buildcraft.api.v2.pipe.PipeEndpointKind.BLOCK) continue;
+                BlockPos destination = pos.relative(side);
+                if (!level.hasChunkAt(destination)
+                    || !APItemPorts.isInventory(level, destination, side.getOpposite())) continue;
+                if (APItemPorts.canInsert(level, destination, side.getOpposite(), stack)) {
+                    selected.add(side);
+                }
+            }
+            // Higher priorities always take precedence. A full inventory is unavailable,
+            // so the next priority is considered instead of returning to random routing.
+            if (!selected.isEmpty()) break;
+        }
+        return selected;
+    }
+
     @Override public RouteDecision route(ItemRouteContext context) {
         EnumMap<Direction, Integer> weights = new EnumMap<>(Direction.class);
-        for (Direction candidate : context.candidates()) weights.put(candidate, 1);
-        ServerLevel level = locateWorld();
-        if (level == null) return new RouteDecision(weights);
-        BlockPos pos = context.pipe().position();
-        for (int priority = 6; priority >= 1; priority--) {
-            boolean anyInventory = false;
-            EnumMap<Direction, Integer> selected = new EnumMap<>(Direction.class);
-            for (Direction side : Direction.values()) {
-                if (priorities[side.ordinal()] != priority || !context.candidates().contains(side)
-                    || context.pipe().endpoint(side) != buildcraft.api.v2.pipe.PipeEndpointKind.BLOCK)
-                    continue;
-                BlockPos destination = pos.relative(side);
-                if (!level.hasChunkAt(destination) || !APItemPorts.isInventory(level, destination, side.getOpposite())) continue;
-                anyInventory = true;
-                if (APItemPorts.canInsert(level, destination, side.getOpposite(), context.stack())) {
-                    selected.put(side, 1);
-                }
-            }
-            if (anyInventory) {
-                if (!selected.isEmpty()) {
-                    weights.replaceAll((side, w) -> selected.containsKey(side) ? 1 : 0);
-                }
-                break;
-            }
+        for (Direction candidate : context.candidates()) {
+            weights.put(candidate, priorities[candidate.ordinal()] == 0 ? 0 : 1);
+        }
+        EnumSet<Direction> selected = availableDestinations(
+            context.pipe(), routingWorld(context.pipe()), context.stack(), context.candidates());
+        if (!selected.isEmpty()) {
+            weights.replaceAll((side, weight) -> selected.contains(side) ? 1 : 0);
         }
         return new RouteDecision(weights);
     }
@@ -136,14 +147,11 @@ public final class PriorityInsertionComponent implements ItemRouteComponent,
                 return CodecResult.failure("Invalid priority insertion state");
             PriorityInsertionComponent instance = new PriorityInsertionComponent();
             byte[] bytes = data.bytes();
-            boolean any = false;
             for (int i = 0; i < 6; i++) {
                 int priority = Byte.toUnsignedInt(bytes[i]);
                 if (priority > 6) return CodecResult.failure("Invalid side priority");
                 instance.priorities[i] = priority;
-                any |= priority > 0;
             }
-            if (!any) Arrays.fill(instance.priorities, 1);
             return CodecResult.success(instance);
         }
     };

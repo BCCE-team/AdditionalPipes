@@ -102,7 +102,8 @@ target.1.19.2-forge.source.overlay_root=version-src/1.19.2-forge
                         self.assertIn('void extractRenderState(GuiGraphicsExtractor graphics,', source)
                         self.assertIn('super.extractBackground(graphics, mouseX, mouseY, partialTick);', source)
                         self.assertIn('super.extractRenderState(graphics, mouseX, mouseY, partialTick);', source)
-                        self.assertIn('graphics.text(font, screenTitle(),', source)
+                        self.assertIn('String heading = GuiTextLayout.fit(screenTitle(), GUI_WIDTH - 82, font::width);', source)
+                        self.assertIn('graphics.text(font, heading,', source)
                         self.assertNotIn('GuiGraphics;', source)
                         self.assertNotIn('renderBackground(', source)
                         manifest = json.loads((selected / 'source-manifest.json').read_text())
@@ -190,18 +191,15 @@ target.1.19.2-forge.source.overlay_root=version-src/1.19.2-forge
                         expected_layer = ('version-src/1.21.11-neoforge' if target == '1.21.11-neoforge'
                                           else 'source-family-platforms/26.X/neoforge')
                         self.assertEqual(sources[path], expected_layer)
-                        self.assertIn('import buildcraft.lib.misc.CapUtil;', source)
-                        self.assertIn('var items = CapUtil.getItemHandler(level, pos, side);', source)
-                        self.assertIn('CapUtil.getItemHandler(level, pos, side) != null', source)
-                        self.assertIn('items.insertItem(slot, stack.copy(), true)', source)
+                        self.assertIn('ItemTransactorHelper.getTransactor(level, pos, side, level.getBlockEntity(pos))', source)
                         self.assertNotIn('Capabilities.ItemHandler.BLOCK', source)
                         self.assertNotIn('import net.neoforged.neoforge.items.IItemHandler;', source)
                     elif target == '1.21.1-neoforge':
                         self.assertEqual(sources[path], 'source-platforms/neoforge')
-                        self.assertIn('Capabilities.ItemHandler.BLOCK', source)
+                        self.assertIn('ItemTransactorHelper.getTransactor(block, side)', source)
                     else:
                         self.assertEqual(sources[path], 'source-platforms/forge')
-                        self.assertIn('ForgeCapabilities.ITEM_HANDLER', source)
+                        self.assertIn('ItemTransactorHelper.getTransactor(block, side)', source)
 
     def test_player_drop_prediction_by_target(self):
         targets = (

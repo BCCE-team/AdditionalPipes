@@ -168,7 +168,8 @@ public final class TeleportConfigScreen extends Screen {
     private void drawContent(GuiGraphics graphics) {
         int left = (width - GUI_WIDTH) / 2;
         int top = (height - GUI_HEIGHT) / 2;
-        graphics.drawString(font, screenTitle(), left + 70, top + 6, TITLE_COLOR, false);
+        String heading = GuiTextLayout.fit(screenTitle(), GUI_WIDTH - 82, font::width);
+        graphics.drawString(font, heading, left + 70, top + 6, TITLE_COLOR, false);
         graphics.drawString(font, cut("Coords: (" + data.position().x() + ", " + data.position().y() + ", " + data.position().z() + ")", 200), left + 12, top + 20, TEXT_COLOR, false);
         graphics.drawString(font, "Frequency: " + data.frequency(), left + 16, top + 66, TEXT_COLOR, false);
         drawHelpLedger(graphics, left, top + 5);
@@ -186,9 +187,9 @@ public final class TeleportConfigScreen extends Screen {
             x + displayW - 20, y + 4, x + displayW - 4, y + 20);
         if (displayW >= 145) {
             graphics.drawString(font, "Help", x + 8, y + 5, 0xE1C92F, false);
-            graphics.drawString(font, "Pipes link by frequency", x + 8, y + 23, 0x202020, false);
-            graphics.drawString(font, "Select frequency with buttons", x + 8, y + 38, 0x202020, false);
-            graphics.drawString(font, "Mode sets transfer direction", x + 8, y + 53, 0x202020, false);
+            graphics.drawString(font, cut("Pipes link by frequency", displayW - 16), x + 8, y + 23, 0x202020, false);
+            graphics.drawString(font, cut("Select frequency with buttons", displayW - 16), x + 8, y + 38, 0x202020, false);
+            graphics.drawString(font, cut("Mode sets transfer direction", displayW - 16), x + 8, y + 53, 0x202020, false);
         }
     }
 
@@ -236,7 +237,7 @@ public final class TeleportConfigScreen extends Screen {
     }
 
     private String cut(String text, int maxWidth) {
-        return font.plainSubstrByWidth(text, maxWidth);
+        return GuiTextLayout.fit(text, maxWidth, font::width);
     }
 
     private String screenTitle() {

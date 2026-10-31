@@ -30,15 +30,14 @@ jobs:
           java-version: '21'
       - name: Test service algorithms, protocol and overlay precedence
         run: python -m unittest discover -s scripts/tests -v
-      - name: Synthetically compile seven effective-source variants
-        run: python scripts/stub_compile_targets.py
+      # Real per-target Java compilation runs in the build matrix below.
+      # The old handwritten MC/BCCE stub compilation is stale and cannot
+      # validate new API v2.1 signatures accurately.
 
-  # AP needs seven platform-matched BCCE binaries. The archive URL must be
-  # configured in repository variables before compile jobs are enabled.
+  # BCCE is resolved automatically from Modrinth Maven for each target.
   build:
     name: Build ${{ matrix.generation }} / Java ${{ matrix.java }}
     needs: validate
-    if: ${{ vars.AP_BCCE_ARCHIVE_URL != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -59,14 +58,8 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
-      - name: Retrieve version-matched BCCE binary archive
-        env:
-          BCCE_URL: ${{ vars.AP_BCCE_ARCHIVE_URL }}
-        run: curl --fail --location --retry 3 "$BCCE_URL" --output /tmp/bcce-build.zip
-      - name: Verify and import BuildCraft API v2 jars
-        run: python scripts/import_bcce.py --archive /tmp/bcce-build.zip
       - name: Build family with its own wrapper and Stonecutter
-        run: ./gradlew buildAndCollect
+        run: bash ./gradlew buildAndCollect
         working-directory: builds/${{ matrix.generation }}
       - name: Verify built jar contents for all family targets
         shell: bash

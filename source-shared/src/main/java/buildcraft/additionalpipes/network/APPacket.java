@@ -12,7 +12,8 @@ public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.Teleport
     APPacket.AdvancedWoodUpdate, APPacket.TeleportData, APPacket.ChunkloadRequest,
     APPacket.ChunkloadData, APPacket.JeweledServerUpdate, APPacket.JeweledClientUpdate,
     APPacket.TeleportView, APPacket.TeleportViewRequest, APPacket.InsertionView,
-    APPacket.InsertionViewRequest, APPacket.AdvancedWoodFilterUpdate {
+    APPacket.InsertionViewRequest, APPacket.AdvancedWoodFilterUpdate,
+    APPacket.DistributionView, APPacket.DistributionViewRequest {
 
     APMessageType type();
 
@@ -25,6 +26,22 @@ public sealed interface APPacket permits APPacket.ValueUpdate, APPacket.Teleport
             Objects.requireNonNull(position);
             if (index < 0 || index > 5) throw new IllegalArgumentException("Invalid face index");
         }
+    }
+    /** Server-authoritative six side quotas in Direction.values() order. */
+    record DistributionView(PipeLocation position, List<Integer> quotas, boolean open) implements APPacket {
+        public DistributionView {
+            Objects.requireNonNull(position);
+            Objects.requireNonNull(quotas);
+            if (quotas.size() != 6 || quotas.stream().anyMatch(value -> value == null || value < 0 || value > 4096)
+                || quotas.stream().allMatch(value -> value == 0))
+                throw new IllegalArgumentException("Invalid distribution quota snapshot");
+            quotas = List.copyOf(quotas);
+        }
+        @Override public APMessageType type() { return APMessageType.DISTRIBUTION_VIEW; }
+    }
+    record DistributionViewRequest(PipeLocation position) implements APPacket {
+        public DistributionViewRequest { Objects.requireNonNull(position); }
+        @Override public APMessageType type() { return APMessageType.DISTRIBUTION_VIEW_REQUEST; }
     }
     record TeleportUpdate(PipeLocation position, int frequency, boolean isPublic, byte operation) implements APPacket {
         public TeleportUpdate {

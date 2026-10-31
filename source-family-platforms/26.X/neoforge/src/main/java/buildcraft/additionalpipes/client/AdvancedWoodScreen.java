@@ -47,7 +47,9 @@ public final class AdvancedWoodScreen extends AbstractContainerScreen<AdvancedWo
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, (imageWidth - font.width(title)) / 2, 5, 0xFF404040, false);
-        graphics.text(font, playerInventoryTitle, 8, 63, 0xFF404040, false);
+        String heading = GuiTextLayout.fit(title.getString(), imageWidth - 16, font::width);
+        graphics.text(font, heading, (imageWidth - font.width(heading)) / 2, 5, 0xFF404040, false);
+        String inventoryLabel = GuiTextLayout.fit(playerInventoryTitle.getString(), imageWidth - 16, font::width);
+        graphics.text(font, inventoryLabel, 8, 63, 0xFF404040, false);
     }
 }

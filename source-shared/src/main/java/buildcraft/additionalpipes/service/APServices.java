@@ -11,6 +11,7 @@ import buildcraft.additionalpipes.network.ChunkloadRequestHandler;
 import buildcraft.additionalpipes.pipes.TeleportManager;
 import buildcraft.additionalpipes.pipes.TeleportUiServer;
 import buildcraft.additionalpipes.pipes.APInsertionUiServer;
+import buildcraft.additionalpipes.pipes.APDistributionUiServer;
 import buildcraft.additionalpipes.utils.Log;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,6 +47,11 @@ public final class APServices {
         }) {
             PACKETS.registerServerHandler(type, APInsertionUiServer::authorized, APInsertionUiServer::handle);
         }
+        for (APMessageType type : new APMessageType[] {
+            APMessageType.DISTRIBUTION_UPDATE, APMessageType.DISTRIBUTION_VIEW_REQUEST
+        }) {
+            PACKETS.registerServerHandler(type, APDistributionUiServer::authorized, APDistributionUiServer::handle);
+        }
         PACKETS.registerClientHandler(APMessageType.CHUNKLOAD_DATA, packet -> {
             APPacket.ChunkloadData data = (APPacket.ChunkloadData) packet;
             CHUNK_VIEW.receive(data.dimension(), data.chunks());
@@ -66,6 +72,7 @@ public final class APServices {
         ChunkloadRequestHandler.reset();
         TeleportUiServer.reset();
         APInsertionUiServer.reset();
+        APDistributionUiServer.reset();
         saveRoot = root.toAbsolutePath().normalize();
         activeServer = Objects.requireNonNull(server, "server");
         try { TeleportFrequencyStore.load(saveRoot, TELEPORTS); }
@@ -84,6 +91,7 @@ public final class APServices {
         ChunkloadRequestHandler.reset();
         TeleportUiServer.reset();
         APInsertionUiServer.reset();
+        APDistributionUiServer.reset();
         saveRoot = null;
         activeServer = null;
     }

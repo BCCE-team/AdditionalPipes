@@ -5,6 +5,9 @@ import buildcraft.additionalpipes.content.APContent;
 import buildcraft.additionalpipes.pipes.APSwitchPipes;
 import buildcraft.additionalpipes.pipes.APTeleportPipes;
 import buildcraft.additionalpipes.pipes.APInsertionPipes;
+import buildcraft.additionalpipes.pipes.APStoragePipes;
+import buildcraft.additionalpipes.pipes.APUtilityPipes;
+import buildcraft.additionalpipes.pipes.ClosedPipeMenu;
 import buildcraft.additionalpipes.pipes.AdvancedWoodMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.flag.FeatureFlags;
@@ -31,14 +34,16 @@ public final class APContentRegistry {
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, AdditionalPipes.MOD_ID);
     public static final Supplier<MenuType<AdvancedWoodMenu>> ADVANCED_WOOD_MENU =
         MENUS.register("advanced_wood", () -> new MenuType<>(AdvancedWoodMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    public static final Supplier<MenuType<ClosedPipeMenu>> CLOSED_PIPE_MENU =
+        MENUS.register("closed_pipe", () -> new MenuType<>(ClosedPipeMenu::new, FeatureFlags.DEFAULT_FLAGS));
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, AdditionalPipes.MOD_ID);
     private static final Map<String, Supplier<? extends Item>> ALL_ITEMS = new LinkedHashMap<>();
 
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
-            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id)) {
-                ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> APSwitchPipes.isSwitch(id) ? APSwitchPipes.createItem(id) : APTeleportPipes.createItem(id) : APInsertionPipes.createItem(id))));
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id)) {
+                ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> AdditionalPipes.createPipeItem(id))));
                 continue;
             }
             Supplier<? extends Block> block = BLOCKS.register(id, () -> new Block(

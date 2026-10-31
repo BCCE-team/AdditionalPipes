@@ -40,6 +40,9 @@ class SwitchContentTests(unittest.TestCase):
                         self.assertTrue(recipe.is_file(), str(recipe))
                         value = json.loads(recipe.read_text())
                         self.assertIn(f'additionalpipes:{name}', json.dumps(value))
+                        if name == 'pipe_fe_switch':
+                            ingredients = [part if isinstance(part, str) else part['item'] for part in value['ingredients']]
+                            self.assertEqual(ingredients, ['additionalpipes:pipe_power_switch', 'minecraft:redstone'])
                         if modern:
                             self.assertTrue((res / f'assets/additionalpipes/items/{name}.json').is_file())
                     for tex in TEXTURES:
@@ -112,7 +115,7 @@ class SwitchContentTests(unittest.TestCase):
                     self.assertNotIn('ForgeCapabilities.ENERGY', power_platform)
                     self.assertNotIn('CapUtil.CAP_FE', power_platform)
                     for behaviour in ('route(ItemRouteContext', 'for (int priority = 6; priority >= 1; priority--)',
-                                      'APItemPorts.canInsert(', 'Arrays.fill(priorities, 1)'):
+                                      'APItemPorts.canInsert(', 'if (!selected.isEmpty()) break;'):
                         self.assertIn(behaviour, priority)
                     self.assertIn('extends AbstractContainerMenu', (src / 'AdvancedWoodMenu.java').read_text())
                     self.assertIn('new APPacket.ValueUpdate(', ui)

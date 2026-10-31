@@ -24,6 +24,12 @@ public final class APClientPackets {
             else if (APClientScreenAccess.current(client) instanceof TeleportConfigScreen screen) screen.refresh(view);
             return;
         }
+        if (packet instanceof APPacket.DistributionView view) {
+            Minecraft client = Minecraft.getInstance();
+            if (view.open()) APClientScreenAccess.open(client, new DistributionConfigScreen(view));
+            else if (APClientScreenAccess.current(client) instanceof DistributionConfigScreen screen) screen.refresh(view);
+            return;
+        }
         if (packet instanceof APPacket.InsertionView view) {
             if (!view.priority()) return;
             Minecraft client = Minecraft.getInstance();

@@ -18,7 +18,7 @@ import java.util.UUID;
  * Checks version, direction, sizes and trailing bytes before server-thread dispatch.
  */
 public final class APProtocol {
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
     public static final int MAX_PACKET_BYTES = 32768;
     private APProtocol() { }
 
@@ -34,6 +34,13 @@ public final class APProtocol {
                 out.writeByte(message.index());
                 out.writeInt(message.value());
             }
+            case DISTRIBUTION_VIEW -> {
+                APPacket.DistributionView view = (APPacket.DistributionView) packet;
+                location(out, view.position());
+                for (int quota : view.quotas()) out.writeShort(quota);
+                out.writeBoolean(view.open());
+            }
+            case DISTRIBUTION_VIEW_REQUEST -> location(out, ((APPacket.DistributionViewRequest) packet).position());
             case TELEPORT_UPDATE -> {
                 APPacket.TeleportUpdate message = (APPacket.TeleportUpdate) packet;
                 location(out, message.position());
@@ -150,6 +157,13 @@ public final class APProtocol {
                 int value = in.readInt();
                 decoded = new APPacket.ValueUpdate(type, location, face, value);
             }
+            case DISTRIBUTION_VIEW -> {
+                PipeLocation position = location(in);
+                List<Integer> quotas = new ArrayList<>(6);
+                for (int i = 0; i < 6; i++) quotas.add(in.readUnsignedShort());
+                decoded = new APPacket.DistributionView(position, quotas, in.readBoolean());
+            }
+            case DISTRIBUTION_VIEW_REQUEST -> decoded = new APPacket.DistributionViewRequest(location(in));
             case TELEPORT_UPDATE -> {
                 PipeLocation location = location(in);
                 int frequency = in.readInt();

@@ -112,6 +112,8 @@ public final class InfrastructureRegression {
         var location=new PipeLocation("minecraft:the_nether", -32, 100, 4096);
         List<APPacket> messages=List.of(
             new APPacket.ValueUpdate(APMessageType.DISTRIBUTION_UPDATE,location,(byte)3,29),
+            new APPacket.DistributionView(location,List.of(1, 2, 3, 4, 5, 4096),true),
+            new APPacket.DistributionViewRequest(location),
             new APPacket.TeleportUpdate(location,55,true,(byte)3),
             new APPacket.AdvancedWoodUpdate(location),
             new APPacket.TeleportData(location,new int[]{5,6,7},UUID.randomUUID(),"Player"),
@@ -141,6 +143,12 @@ public final class InfrastructureRegression {
             try { APProtocol.decode(withJunk,packet.type().serverbound()); throw new AssertionError("trailing byte accepted"); }
             catch (IOException expected) { checks++; }
         }
+        rejects(()->new APPacket.DistributionView(location,List.of(0,0,0,0,0,0),false),
+            "Distribution quota must retain at least one nonzero face");
+        rejects(()->new APPacket.DistributionView(location,List.of(1,2,3,4,5,4097),true),
+            "Distribution maximum quota must be enforced");
+        rejects(()->new APPacket.DistributionView(location,List.of(1,2,3),true),
+            "Distribution snapshot must contain six faces");
         rejects(()->new APPacket.TeleportUpdate(location,1_000_000,false,(byte)1),
             "Teleport GUI frequency above maximum");
         rejects(()->new APPacket.TeleportView(location,-1,(byte)1,true,"Player","ITEMS",0,List.of(),true),

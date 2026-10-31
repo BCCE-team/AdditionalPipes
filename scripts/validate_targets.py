@@ -56,7 +56,7 @@ def check() -> None:
             assets = layout/'resources/assets/additionalpipes'
             assert len(list((assets/'blockstates').glob('*.json'))) == 20, target
             assert len(list((assets/'models/item').glob('*.json'))) == 21, target
-            assert len(list((assets/'textures/block').glob('*.png'))) == 44, target
+            assert len(list((assets/'textures/block').glob('*.png'))) == 45, target
             assert (assets/'textures/item/dog_deaggravator.png').exists(), target
             lang = json.loads((assets/'lang/en_us.json').read_text())
             assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 20, target

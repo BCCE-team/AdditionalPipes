@@ -2,6 +2,7 @@ package buildcraft.additionalpipes.platform;
 
 import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.client.AdvancedWoodScreen;
+import buildcraft.additionalpipes.client.ClosedPipeScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -14,5 +15,6 @@ public final class APAdvancedWoodScreens {
     @SubscribeEvent
     public static void register(RegisterMenuScreensEvent event) {
         event.register(APContentRegistry.ADVANCED_WOOD_MENU.get(), AdvancedWoodScreen::new);
+        event.register(APContentRegistry.CLOSED_PIPE_MENU.get(), ClosedPipeScreen::new);
     }
 }

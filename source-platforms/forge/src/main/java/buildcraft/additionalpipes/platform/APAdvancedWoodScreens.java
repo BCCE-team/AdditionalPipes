@@ -2,6 +2,7 @@ package buildcraft.additionalpipes.platform;
 
 import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.client.AdvancedWoodScreen;
+import buildcraft.additionalpipes.client.ClosedPipeScreen;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,6 +15,9 @@ public final class APAdvancedWoodScreens {
 
     @SubscribeEvent
     public static void register(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> MenuScreens.register(APContentRegistry.ADVANCED_WOOD_MENU.get(), AdvancedWoodScreen::new));
+        event.enqueueWork(() -> {
+            MenuScreens.register(APContentRegistry.ADVANCED_WOOD_MENU.get(), AdvancedWoodScreen::new);
+            MenuScreens.register(APContentRegistry.CLOSED_PIPE_MENU.get(), ClosedPipeScreen::new);
+        });
     }
 }

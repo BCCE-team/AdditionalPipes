@@ -172,14 +172,17 @@ public final class InsertionConfigScreen extends Screen {
         int top = (height - panelHeight()) / 2;
         (state.priority() ? PRIORITY_BACKGROUND : WOOD_BACKGROUND).drawAt(graphics, left, top);
         super.render(graphics, mouseX, mouseY, partialTick);
+        String heading = GuiTextLayout.fit(title(), panelWidth() - 12, font::width);
         if (state.priority()) {
-            graphics.drawString(font, title(), left + (PRIORITY_WIDTH - font.width(title())) / 2, top + PRIORITY_TITLE_Y, TITLE_COLOR, false);
+            graphics.drawString(font, heading, left + (PRIORITY_WIDTH - font.width(heading)) / 2, top + PRIORITY_TITLE_Y, TITLE_COLOR, false);
         } else {
             drawSlotHighlight(graphics, left, top, mouseX, mouseY);
             drawFilterItems(graphics, left, top);
             drawPlayerInventory(graphics, left, top);
-            graphics.drawString(font, title(), left + (WOOD_WIDTH - font.width(title())) / 2, top + WOOD_TITLE_Y, TITLE_COLOR, false);
-            graphics.drawString(font, Component.translatable("container.inventory"), left + WOOD_INVENTORY_X, top + WOOD_INVENTORY_Y, TEXT_COLOR, false);
+            graphics.drawString(font, heading, left + (WOOD_WIDTH - font.width(heading)) / 2, top + WOOD_TITLE_Y, TITLE_COLOR, false);
+            String inventoryLabel = GuiTextLayout.fit(Component.translatable("container.inventory").getString(),
+                WOOD_WIDTH - WOOD_INVENTORY_X - 8, font::width);
+            graphics.drawString(font, inventoryLabel, left + WOOD_INVENTORY_X, top + WOOD_INVENTORY_Y, TEXT_COLOR, false);
         }
     }
 

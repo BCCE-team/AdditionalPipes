@@ -58,14 +58,14 @@ sourceLayers.each { layer ->
     if (!layer.isDirectory()) throw new GradleException("Source layer missing: ${layer}")
 }
 
-def localMavenRoot = new File(repositoryRoot, required('bcce.maven_root'))
+def bcceRepositoryUrl = required('bcce.repository')
 def bcceGroup = required('bcce.group')
 def bcceModule = required('bcce.module')
 def bcceVersion = required('bcce.version')
-def bccePublicationVersion = "${bcceVersion}-${target}"
+// Modrinth publishes BCCE as 8.0.24+<minecraft>+<loader>, not the
+// synthetic 8.0.24-<minecraft>-<loader> version used by the old local importer.
+def bccePublicationVersion = "${bcceVersion}+${minecraftVersion}+${loader}"
 def bcceCoordinates = "${bcceGroup}:${bcceModule}:${bccePublicationVersion}"
-def bcceJar = new File(localMavenRoot,
-    "${bcceGroup.replace('.', '/')}/${bcceModule}/${bccePublicationVersion}/${bcceModule}-${bccePublicationVersion}.jar")
 
 version = "${modVersion}+${target.replace('-', '+')}"
 group = required('mod.group')
@@ -104,20 +104,11 @@ sourceSets {
     }
 }
 
-def verifyBcceJar = tasks.register('verifyLocalBcceJar') {
-    group = 'verification'
-    description = "Require the BCCE ${bcceVersion} build for ${target}"
-    inputs.file(bcceJar).optional()
-    doLast {
-        if (!bcceJar.isFile()) {
-            throw new GradleException("Missing BuildCraft dependency: ${bcceJar}. Run: python scripts/import_bcce.py --archive /path/to/build.zip")
-        }
-    }
-}
-
+// BCCE is resolved by Gradle from its public Maven repository. No local
+// import step or checked-in JAR is required; resolution failures remain normal
+// Gradle dependency errors (with repository, group and version diagnostics).
 tasks.withType(JavaCompile).configureEach {
     dependsOn prepare
-    dependsOn verifyBcceJar
     options.encoding = 'UTF-8'
 }
 tasks.withType(ProcessResources).configureEach {
@@ -177,8 +168,8 @@ project.ext.apTarget = [
     required: required,
     outputRoot: outputRoot,
     prepare: prepare,
-    localMavenRoot: localMavenRoot,
+    bcceRepositoryUrl: bcceRepositoryUrl,
+    bcceGroup: bcceGroup,
     bcceCoordinates: bcceCoordinates,
-    bcceJar: bcceJar,
     jarFolder: jarFolder
 ]

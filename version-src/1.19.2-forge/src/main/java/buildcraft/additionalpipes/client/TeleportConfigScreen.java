@@ -166,9 +166,10 @@ public final class TeleportConfigScreen extends Screen {
     private void drawContent(PoseStack graphics) {
         int left = (width - GUI_WIDTH) / 2;
         int top = (height - GUI_HEIGHT) / 2;
-        drawString(graphics, font, screenTitle(), left + 70, top + 6, TITLE_COLOR);
-        drawString(graphics, font, cut("Coords: (" + data.position().x() + ", " + data.position().y() + ", " + data.position().z() + ")", 200), left + 12, top + 20, TEXT_COLOR);
-        drawString(graphics, font, "Frequency: " + data.frequency(), left + 16, top + 66, TEXT_COLOR);
+        String heading = GuiTextLayout.fit(screenTitle(), GUI_WIDTH - 82, font::width);
+        font.draw(graphics, heading, left + 70, top + 6, TITLE_COLOR);
+        font.draw(graphics, cut("Coords: (" + data.position().x() + ", " + data.position().y() + ", " + data.position().z() + ")", 200), left + 12, top + 20, TEXT_COLOR);
+        font.draw(graphics, "Frequency: " + data.frequency(), left + 16, top + 66, TEXT_COLOR);
         drawHelpLedger(graphics, left, top + 5);
         drawLedgers(graphics, left + GUI_WIDTH, top + 5);
     }
@@ -183,10 +184,10 @@ public final class TeleportConfigScreen extends Screen {
         GuiIcon.draw(graphics, BCLibSprites.WARNING_MINOR,
             x + displayW - 20, y + 4, x + displayW - 4, y + 20);
         if (displayW >= 145) {
-            drawString(graphics, font, "Help", x + 8, y + 5, 0xE1C92F);
-            drawString(graphics, font, "Pipes link by frequency", x + 8, y + 23, 0x202020);
-            drawString(graphics, font, "Select frequency with buttons", x + 8, y + 38, 0x202020);
-            drawString(graphics, font, "Mode sets transfer direction", x + 8, y + 53, 0x202020);
+            font.draw(graphics, "Help", x + 8, y + 5, 0xE1C92F);
+            font.draw(graphics, cut("Pipes link by frequency", displayW - 16), x + 8, y + 23, 0x202020);
+            font.draw(graphics, cut("Select frequency with buttons", displayW - 16), x + 8, y + 38, 0x202020);
+            font.draw(graphics, cut("Mode sets transfer direction", displayW - 16), x + 8, y + 53, 0x202020);
         }
     }
 
@@ -201,8 +202,8 @@ public final class TeleportConfigScreen extends Screen {
         if (overlay != null) GuiIcon.draw(graphics, overlay, x + 1.5, y + 3.5, x + 19, y + 21);
 
         if (ownerDisplayW >= 125) {
-            drawString(graphics, font, "Ownership", x + 25, y + 5, 0xE1C92F);
-            drawString(graphics, font, cut(data.ownerName().isBlank() ? "Unknown" : data.ownerName(), ownerDisplayW - 33), x + 25, y + 22, 0x000000);
+            font.draw(graphics, "Ownership", x + 25, y + 5, 0xE1C92F);
+            font.draw(graphics, cut(data.ownerName().isBlank() ? "Unknown" : data.ownerName(), ownerDisplayW - 33), x + 25, y + 22, 0x000000);
         }
 
         int connectionsY = y + ownerDisplayH + 5;
@@ -216,11 +217,11 @@ public final class TeleportConfigScreen extends Screen {
 
         if (connectionsDisplayW >= 145) {
             String status = (data.operation() & 1) != 0 ? "Outputs: " : "Inputs: ";
-            drawString(graphics, font, "Connected Pipes", x + 25, connectionsY + 5, 0xE1C92F);
-            drawString(graphics, font, status + data.connectedCount(), x + 25, connectionsY + 20, 0x000000);
+            font.draw(graphics, "Connected Pipes", x + 25, connectionsY + 5, 0xE1C92F);
+            font.draw(graphics, status + data.connectedCount(), x + 25, connectionsY + 20, 0x000000);
             List<PipeLocation> links = data.connections();
             for (int i = 0; i < links.size(); i++) {
-                drawString(graphics, font, cut(connectedText(links.get(i)), connectionsDisplayW - 32),
+                font.draw(graphics, cut(connectedText(links.get(i)), connectionsDisplayW - 32),
                     x + 25, connectionsY + 35 + i * 13, 0x000000);
             }
         }
@@ -234,7 +235,7 @@ public final class TeleportConfigScreen extends Screen {
     }
 
     private String cut(String text, int maxWidth) {
-        return font.plainSubstrByWidth(text, maxWidth);
+        return GuiTextLayout.fit(text, maxWidth, font::width);
     }
 
     private String screenTitle() {

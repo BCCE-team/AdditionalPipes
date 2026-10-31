@@ -26,9 +26,9 @@ minecraft {
 
 repositories {
     maven {
-        name = 'LocalBCCE'
-        url = ap.localMavenRoot.toURI()
-        metadataSources { mavenPom(); artifact() }
+        name = 'BCCE Modrinth Maven'
+        url = uri(ap.bcceRepositoryUrl)
+        content { includeGroup(ap.bcceGroup) }
     }
     mavenCentral()
 }

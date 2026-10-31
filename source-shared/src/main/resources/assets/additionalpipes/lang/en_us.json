@@ -47,7 +47,10 @@
   "gui.additionalpipes.distribution": "Distribution Pipe",
   "gui.additionalpipes.priority": "Priority Insertion Pipe",
   "gui.additionalpipes.advanced_wood": "Advanced Wooden Pipe",
+  "gui.additionalpipes.closed": "Closed Pipe",
   "gui.additionalpipes.jeweled": "Jeweled Pipe",
+  "pipe.additionalpipes.pipe_items_distribution": "Distribution Transport Pipe",
+  "pipe.additionalpipes.pipe_fluids_water_pump": "Water Pump Pipe",
   "pipe.additionalpipes.pipe_items_switch": "Switch Transport Pipe",
   "pipe.additionalpipes.pipe_fluids_switch": "Switch Fluid Pipe",
   "pipe.additionalpipes.pipe_power_switch": "Switch Kinesis Pipe",
@@ -57,5 +60,7 @@
   "pipe.additionalpipes.pipe_power_teleport": "Power Teleport Pipe",
   "pipe.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe",
   "pipe.additionalpipes.pipe_items_adv_wood": "Adv. Wooden Transport Pipe",
-  "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe"
+  "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe",
+  "pipe.additionalpipes.pipe_items_closed": "Closed Transport Pipe",
+  "pipe.additionalpipes.pipe_items_gravity_feed": "Gravity Feed Transport Pipe"
 }
