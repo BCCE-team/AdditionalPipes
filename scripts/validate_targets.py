@@ -54,15 +54,15 @@ def check() -> None:
             assert 'APContentRegistry.java' in java_files, target
             assert 'APContent.java' in java_files, target
             assets = layout/'resources/assets/additionalpipes'
-            assert len(list((assets/'blockstates').glob('*.json'))) == 20, target
-            assert len(list((assets/'models/item').glob('*.json'))) == 21, target
-            assert len(list((assets/'textures/block').glob('*.png'))) == 45, target
+            assert len(list((assets/'blockstates').glob('*.json'))) == 19, target
+            assert len(list((assets/'models/item').glob('*.json'))) == 20, target
+            assert len(list((assets/'textures/block').glob('*.png'))) == 44, target
             assert (assets/'textures/item/dog_deaggravator.png').exists(), target
             lang = json.loads((assets/'lang/en_us.json').read_text())
-            assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 20, target
+            assert len([key for key in lang if key.startswith('block.additionalpipes.')]) == 19, target
             assert not (assets/'lang/ru_ru.json').exists(), target
             recipe_dir = layout/'resources/data/additionalpipes'/('recipes' if generation=='old' else 'recipe')
-            assert len(list(recipe_dir.glob('*.json'))) == 20, target
+            assert len(list(recipe_dir.glob('*.json'))) == 19, target
             assembly = recipe_dir/'assembly/pipe_items_teleport.json'
             assembly_recipe = json.loads(assembly.read_text())
             assert assembly_recipe['MJ'] == 10000000000, target
@@ -82,7 +82,7 @@ def check() -> None:
                     else:
                         assert isinstance(ingredient, dict) and 'item' in ingredient, (target, recipe_path, ingredient)
             if target.startswith(('26.', '1.21.11')):
-                assert len(list((assets/'items').glob('*.json'))) == 21, target
+                assert len(list((assets/'items').glob('*.json'))) == 20, target
             assert 'AdditionalPipes.java' in java_files, target
             forge = 'AdditionalPipesForge.java' in java_files
             neo = 'AdditionalPipesNeoForge.java' in java_files

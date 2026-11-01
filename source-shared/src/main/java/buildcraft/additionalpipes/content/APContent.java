@@ -13,7 +13,6 @@ public final class APContent {
         new Definition("pipe_logistics_teleport", "Logistics Teleport Pipe [WIP]"),
         new Definition("pipe_items_jeweled", "Jeweled Transport Pipe"),
         new Definition("pipe_items_distribution", "Distribution Transport Pipe"),
-        new Definition("pipe_items_adv_insertion", "[Deprecated] Insertion Transport Pipe"),
         new Definition("pipe_items_addition", "Addition Transport Pipe"),
         new Definition("pipe_items_priority", "Priority Insertion Pipe"),
         new Definition("pipe_items_adv_wood", "Adv. Wooden Transport Pipe"),
