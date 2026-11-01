@@ -10,7 +10,6 @@ public final class APContent {
         new Definition("pipe_fluids_teleport", "Fluid Teleport Pipe"),
         new Definition("pipe_power_teleport", "Power Teleport Pipe"),
         new Definition("pipe_fe_teleport", "FE Teleport Pipe"),
-        new Definition("pipe_logistics_teleport", "Logistics Teleport Pipe [WIP]"),
         new Definition("pipe_items_jeweled", "Jeweled Transport Pipe"),
         new Definition("pipe_items_distribution", "Distribution Transport Pipe"),
         new Definition("pipe_items_addition", "Addition Transport Pipe"),

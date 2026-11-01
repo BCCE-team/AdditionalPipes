@@ -64,7 +64,7 @@ def verify(target: str, path: Path):
                 assert face['uv'] == expected, (target, name, side)
         recipe_dir = 'recipes' if target.startswith(('1.19.2', '1.20.1')) else 'recipe'
         recipe_paths = [name for name in names if name.startswith('data/additionalpipes/' + recipe_dir + '/') and name.endswith('.json')]
-        assert len(recipe_paths) == 20, (target, len(recipe_paths))
+        assert len(recipe_paths) == 19, (target, len(recipe_paths))
         for name in recipe_paths:
             recipe = json.loads(z.read(name))
             if recipe['type'] == 'minecraft:crafting_shaped':

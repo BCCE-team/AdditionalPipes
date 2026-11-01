@@ -8,8 +8,6 @@
   "block.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe",
   "item.additionalpipes.pipe_power_teleport": "Power Teleport Pipe",
   "item.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe",
-  "block.additionalpipes.pipe_logistics_teleport": "Logistics Teleport Pipe [WIP]",
-  "item.additionalpipes.pipe_logistics_teleport": "Logistics Teleport Pipe [WIP]",
   "block.additionalpipes.pipe_items_jeweled": "Jeweled Transport Pipe",
   "item.additionalpipes.pipe_items_jeweled": "Jeweled Transport Pipe",
   "block.additionalpipes.pipe_items_distribution": "Distribution Transport Pipe",

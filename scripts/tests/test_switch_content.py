@@ -51,7 +51,7 @@ class SwitchContentTests(unittest.TestCase):
                     block_models = res / 'assets/additionalpipes/models/block'
                     item_models = res / 'assets/additionalpipes/models/item'
                     pipes = sorted(block_models.glob('pipe_*.json'))
-                    self.assertEqual(len(pipes), 18)
+                    self.assertEqual(len(pipes), 17)
                     for block_path in pipes:
                         texture = json.loads(block_path.read_text())['textures']['all']
                         model = json.loads((item_models / block_path.name).read_text())

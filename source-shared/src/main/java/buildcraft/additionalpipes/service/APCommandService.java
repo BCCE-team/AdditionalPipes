@@ -20,7 +20,6 @@ public final class APCommandService {
             case "item", "items" -> PipeType.ITEMS;
             case "fluid", "fluids" -> PipeType.FLUIDS;
             case "power" -> PipeType.POWER;
-            case "logistic", "logistics" -> PipeType.LOGISTICS;
             default -> throw new IllegalArgumentException("Unknown teleport medium: " + medium);
         };
         List<String> result = new ArrayList<>();
