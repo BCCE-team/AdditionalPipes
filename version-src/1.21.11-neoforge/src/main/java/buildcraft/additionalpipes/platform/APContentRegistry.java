@@ -7,6 +7,7 @@ import buildcraft.additionalpipes.pipes.APTeleportPipes;
 import buildcraft.additionalpipes.pipes.APInsertionPipes;
 import buildcraft.additionalpipes.pipes.APStoragePipes;
 import buildcraft.additionalpipes.pipes.APUtilityPipes;
+import buildcraft.additionalpipes.pipes.APAdditionPipes;
 import buildcraft.additionalpipes.pipes.ClosedPipeMenu;
 import buildcraft.additionalpipes.pipes.AdvancedWoodMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -42,7 +43,7 @@ public final class APContentRegistry {
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
-            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id)) {
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id)) {
                 ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> AdditionalPipes.createPipeItem(id))));
                 continue;
             }
@@ -53,9 +54,6 @@ public final class APContentRegistry {
             ALL_ITEMS.put(id, ITEMS.register(id, () -> new BlockItem(block.get(), new Item.Properties().setId(
                 ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id))))));
         }
-        ALL_ITEMS.put(APContent.DOG_DEAGGRAVATOR, ITEMS.register(APContent.DOG_DEAGGRAVATOR,
-            () -> new Item(new Item.Properties().setId(
-                ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, APContent.DOG_DEAGGRAVATOR))))));
         TABS.register("additional_pipes", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.additionalpipes"))
             .icon(() -> new ItemStack(ALL_ITEMS.get("pipe_items_teleport").get()))

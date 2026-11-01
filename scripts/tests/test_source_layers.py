@@ -192,8 +192,13 @@ target.1.19.2-forge.source.overlay_root=version-src/1.19.2-forge
                                           else 'source-family-platforms/26.X/neoforge')
                         self.assertEqual(sources[path], expected_layer)
                         self.assertIn('ItemTransactorHelper.getTransactor(level, pos, side, level.getBlockEntity(pos))', source)
+                        # Addition Pipe needs read-only slot inspection. All insertion must
+                        # still go through BCCE's simulated IItemTransactor.
+                        self.assertIn('import net.minecraft.world.level.block.entity.BlockEntity;', source)
+                        self.assertIn('ItemStorage handler = PlatformStorage.items(level, pos, side);', source)
                         self.assertNotIn('Capabilities.ItemHandler.BLOCK', source)
-                        self.assertNotIn('import net.neoforged.neoforge.items.IItemHandler;', source)
+                        self.assertIn('items.insert(stack.copy(), false, true)', source)
+                        self.assertNotIn('items.insert(stack.copy(), false, false)', source)
                     elif target == '1.21.1-neoforge':
                         self.assertEqual(sources[path], 'source-platforms/neoforge')
                         self.assertIn('ItemTransactorHelper.getTransactor(block, side)', source)

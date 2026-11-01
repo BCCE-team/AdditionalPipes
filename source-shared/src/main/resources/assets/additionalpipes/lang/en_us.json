@@ -34,10 +34,6 @@
   "item.additionalpipes.pipe_fluids_water_pump": "Water Pump Pipe",
   "block.additionalpipes.pipe_fluids_obsidian": "Obsidian Fluid Pipe",
   "item.additionalpipes.pipe_fluids_obsidian": "Obsidian Fluid Pipe",
-  "block.additionalpipes.teleport_tether": "Teleport Tether",
-  "item.additionalpipes.teleport_tether": "Teleport Tether",
-  "item.additionalpipes.dog_deaggravator": "Dog Deaggravator",
-  "tooltip.additionalpipes.dog_deaggravator": "Calms down your dogs",
   "tooltip.additionalpipes.teleport": "No more long pipelines!",
   "key.additionalpipes.lasers": "Show chunk load boundaries",
   "gui.additionalpipes.distribution": "Distribution Pipe",
@@ -56,6 +52,7 @@
   "pipe.additionalpipes.pipe_power_teleport": "Power Teleport Pipe",
   "pipe.additionalpipes.pipe_fe_teleport": "FE Teleport Pipe",
   "pipe.additionalpipes.pipe_items_adv_wood": "Adv. Wooden Transport Pipe",
+  "pipe.additionalpipes.pipe_items_addition": "Addition Transport Pipe",
   "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe",
   "pipe.additionalpipes.pipe_items_closed": "Closed Transport Pipe",
   "pipe.additionalpipes.pipe_items_gravity_feed": "Gravity Feed Transport Pipe"

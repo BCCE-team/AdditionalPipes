@@ -22,11 +22,18 @@ def verify(target: str, path: Path):
         for name in names:
             if name.startswith('assets/additionalpipes/'):
                 assert re.fullmatch(r'[a-z0-9/._-]+', name), f'{target}: invalid resource path {name}'
+        obsolete = ('teleport_tether', 'dog_deaggravator')
+        assert not any(any(retired in path for retired in obsolete) for path in names), \
+            f'{target}: obsolete content embedded in jar'
+        assert 'assets/additionalpipes/textures/block/tether.png' not in names, \
+            f'{target}: obsolete tether texture embedded in jar'
         for texture in ('advanced_wood_gui.png', 'priority_gui.png'):
             assert f'assets/additionalpipes/textures/gui/{texture}' in names, f'{target}: missing GUI texture {texture}'
         assert 'buildcraft/additionalpipes/AdditionalPipes.class' in names, 'AP entrypoint missing'
         for required in ('service/APServices.class', 'service/BCCEIntegration.class',
-                         'pipes/TeleportManager.class', 'network/APProtocol.class',
+                         'pipes/TeleportManager.class', 'pipes/APAdditionPipes.class',
+                         'pipes/AdditionPipeComponent.class', 'pipes/AdditionRouting.class',
+                         'network/APProtocol.class',
                          'network/ChunkloadRequestHandler.class', 'chunkloader/ChunkLoadingService.class',
                          'platform/network/PlatformNetwork.class', 'platform/chunk/PlatformChunkTickets.class'):
             assert 'buildcraft/additionalpipes/' + required in names, f'{target}: missing {required}'
@@ -64,7 +71,7 @@ def verify(target: str, path: Path):
                 assert face['uv'] == expected, (target, name, side)
         recipe_dir = 'recipes' if target.startswith(('1.19.2', '1.20.1')) else 'recipe'
         recipe_paths = [name for name in names if name.startswith('data/additionalpipes/' + recipe_dir + '/') and name.endswith('.json')]
-        assert len(recipe_paths) == 19, (target, len(recipe_paths))
+        assert len(recipe_paths) == 17, (target, len(recipe_paths))
         for name in recipe_paths:
             recipe = json.loads(z.read(name))
             if recipe['type'] == 'minecraft:crafting_shaped':

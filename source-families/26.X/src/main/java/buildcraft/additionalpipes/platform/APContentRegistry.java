@@ -53,9 +53,6 @@ public final class APContentRegistry {
             ALL_ITEMS.put(id, ITEMS.register(id, () -> new BlockItem(block.get(), new Item.Properties().setId(
                 ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id))))));
         }
-        ALL_ITEMS.put(APContent.DOG_DEAGGRAVATOR, ITEMS.register(APContent.DOG_DEAGGRAVATOR,
-            () -> new Item(new Item.Properties().setId(
-                ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, APContent.DOG_DEAGGRAVATOR))))));
         TABS.register("additional_pipes", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.additionalpipes"))
             .icon(() -> new ItemStack(ALL_ITEMS.get("pipe_items_teleport").get()))

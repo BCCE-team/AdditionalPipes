@@ -22,11 +22,8 @@ public final class APContent {
         new Definition("pipe_fe_switch", "Switch FE Pipe"),
         new Definition("pipe_fluids_switch", "Switch Fluid Pipe"),
         new Definition("pipe_fluids_water_pump", "Water Pump Pipe"),
-        new Definition("pipe_fluids_obsidian", "Obsidian Fluid Pipe"),
-        new Definition("teleport_tether", "Teleport Tether")
+        new Definition("pipe_fluids_obsidian", "Obsidian Fluid Pipe")
     );
-
-    public static final String DOG_DEAGGRAVATOR = "dog_deaggravator";
 
     private APContent() { }
 }

@@ -302,10 +302,11 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                 ('APInsertionPipes', ('pipe_items_adv_wood','pipe_items_priority')),
                 ('APStoragePipes', ('pipe_items_closed','pipe_items_gravity_feed')),
                 ('APUtilityPipes', ('pipe_items_distribution','pipe_fluids_water_pump')),
+                ('APAdditionPipes', ('pipe_items_addition',)),
             ):
                 method = {'APSwitchPipes':'isSwitch','APTeleportPipes':'isTeleport',
                           'APInsertionPipes':'isInsertion','APStoragePipes':'isStorage',
-                          'APUtilityPipes':'isUtility'}[name]
+                          'APUtilityPipes':'isUtility', 'APAdditionPipes':'isAddition'}[name]
                 values = ','.join('"'+value+'"' for value in ids)
                 write(prefix + 'pipes/' + name + '.java', f'''
                     package buildcraft.additionalpipes.pipes;
@@ -346,7 +347,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                             Item item=entries.get(id).get();
                             boolean pipe=APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id)
                                 || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id)
-                                || APUtilityPipes.isUtility(id);
+                                || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id);
                             if (pipe) {
                                 pipes++;
                                 if (!(item instanceof APItemPipeHolder))
@@ -370,13 +371,13 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                 throw new AssertionError("Other AP content lost from tab " + id);
                             }
                         }
-                        if (pipes!=14) throw new AssertionError("Expected 14 registered BCCE pipe adapters: " + pipes);
-                        if (!entries.get(APContent.DOG_DEAGGRAVATOR).get().getCreativeTabs().contains(ap))
-                            throw new AssertionError("Dog item missing");
+                        if (pipes!=15) throw new AssertionError("Expected 15 registered BCCE pipe adapters: " + pipes);
+                        if (entries.containsKey("dog_deaggravator") || entries.containsKey("teleport_tether"))
+                            throw new AssertionError("Removed placeholders were registered");
                         if (ap.makeIcon().item!=entries.get("pipe_items_teleport").get())
                             throw new AssertionError("Wrong AP icon");
                         Item.assertNoUnregisteredHolders();
-                        System.out.println("PASS: 14 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
+                        System.out.println("PASS: 15 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
                     }
                 }
             ''')
@@ -388,7 +389,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                      'buildcraft.additionalpipes.platform.TestHarness'],
                                     text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PASS: 14 AP pipes', result.stdout)
+            self.assertIn('PASS: 15 AP pipes', result.stdout)
 
 
 if __name__ == '__main__':
