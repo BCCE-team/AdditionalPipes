@@ -22,7 +22,7 @@ EXCLUDE = {
     'InsertionConfigScreen.java', 'APInsertionPipes.java', 'PriorityInsertionComponent.java',
     'AdvancedWoodComponent.java', 'APInsertionUiServer.java', 'APPriorityBehaviour.java',
     'APAdvancedWoodBehaviourBase.java', 'AdvancedWoodMenu.java', 'AdvancedWoodScreen.java', 'APAdvancedWoodStackIO.java',
-    'APUtilityPipes.java', 'DistributionComponent.java', 'DistributionPipeBehaviour.java',
+    'APUtilityPipes.java', 'ObsidianFluidComponent.java', 'APObsidianFluidBehaviourBase.java', 'DistributionComponent.java', 'DistributionPipeBehaviour.java',
     'WaterPumpComponent.java', 'APDistributionUiServer.java', 'DistributionConfigScreen.java',
     'APStoragePipes.java', 'GravityFeedComponent.java', 'GravityFeedBehaviour.java',
     'ClosedPipeComponent.java', 'ClosedPipeBehaviour.java', 'ClosedPipeMenu.java', 'ClosedPipeScreen.java',

@@ -55,5 +55,6 @@
   "pipe.additionalpipes.pipe_items_addition": "Addition Transport Pipe",
   "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe",
   "pipe.additionalpipes.pipe_items_closed": "Closed Transport Pipe",
-  "pipe.additionalpipes.pipe_items_gravity_feed": "Gravity Feed Transport Pipe"
+  "pipe.additionalpipes.pipe_items_gravity_feed": "Gravity Feed Transport Pipe",
+  "pipe.additionalpipes.pipe_fluids_obsidian": "Obsidian Fluid Pipe"
 }

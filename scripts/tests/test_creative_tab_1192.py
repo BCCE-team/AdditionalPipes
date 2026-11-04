@@ -301,7 +301,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                 ('APTeleportPipes', ('pipe_items_teleport','pipe_fluids_teleport','pipe_power_teleport','pipe_fe_teleport')),
                 ('APInsertionPipes', ('pipe_items_adv_wood','pipe_items_priority')),
                 ('APStoragePipes', ('pipe_items_closed','pipe_items_gravity_feed')),
-                ('APUtilityPipes', ('pipe_items_distribution','pipe_fluids_water_pump')),
+                ('APUtilityPipes', ('pipe_items_distribution','pipe_fluids_water_pump','pipe_fluids_obsidian')),
                 ('APAdditionPipes', ('pipe_items_addition',)),
             ):
                 method = {'APSwitchPipes':'isSwitch','APTeleportPipes':'isTeleport',
@@ -371,13 +371,13 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                 throw new AssertionError("Other AP content lost from tab " + id);
                             }
                         }
-                        if (pipes!=15) throw new AssertionError("Expected 15 registered BCCE pipe adapters: " + pipes);
+                        if (pipes!=16) throw new AssertionError("Expected 16 registered BCCE pipe adapters: " + pipes);
                         if (entries.containsKey("dog_deaggravator") || entries.containsKey("teleport_tether"))
                             throw new AssertionError("Removed placeholders were registered");
                         if (ap.makeIcon().item!=entries.get("pipe_items_teleport").get())
                             throw new AssertionError("Wrong AP icon");
                         Item.assertNoUnregisteredHolders();
-                        System.out.println("PASS: 15 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
+                        System.out.println("PASS: 16 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
                     }
                 }
             ''')
@@ -389,7 +389,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                      'buildcraft.additionalpipes.platform.TestHarness'],
                                     text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PASS: 15 AP pipes', result.stdout)
+            self.assertIn('PASS: 16 AP pipes', result.stdout)
 
 
 if __name__ == '__main__':
