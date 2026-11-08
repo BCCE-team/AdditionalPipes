@@ -4,6 +4,7 @@ import buildcraft.additionalpipes.pipes.JeweledMenu;
 import buildcraft.lib.gui.GuiIcon;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -60,9 +61,9 @@ public final class JeweledScreen extends AbstractContainerScreen<JeweledMenu> {
         return false;
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (clickOriginalPanel(mouseX, mouseY, button)) return true;
-        return super.mouseClicked(mouseX, mouseY, button);
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (clickOriginalPanel(event.x(), event.y(), event.button())) return true;
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
