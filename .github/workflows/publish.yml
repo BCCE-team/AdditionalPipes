@@ -1,0 +1,425 @@
+name: Publish Additional Pipes
+
+# Like BCCE, releases (not pushes) trigger multi-platform publication.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: additional-pipes-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  # Destination IDs belong to Additional Pipes, NOT BCCE. Set repo variables.
+  MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+  CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+  # BCCE is a mandatory runtime dependency of this addon.
+  MODRINTH_DEPENDENCIES: 'z3Aj5eOl(required)'
+  CURSEFORGE_DEPENDENCIES: '1592400(required)'
+  PUBLISH_DELAY_SECONDS: '60'
+
+jobs:
+  metadata:
+    name: Validate release metadata
+    runs-on: ubuntu-24.04
+    outputs:
+      version_type: ${{ steps.version_type.outputs.type }}
+    steps:
+      - name: Checkout tagged Additional Pipes sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Validate target layout and tests
+        run: |
+          python scripts/validate_targets.py
+          python -m unittest discover -s scripts/tests -v
+
+      - name: Validate Gradle wrappers
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Validate release tag and publication targets
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          expected="$(sed -n 's/^common\.mod\.version=//p' build-config/common.properties | tr -d '\r')"
+          if [[ -z "$expected" || "$RELEASE_TAG" != "$expected" ]]; then
+            echo "::error::Release tag '$RELEASE_TAG' must match common.mod.version '$expected'."
+            exit 1
+          fi
+          expected_targets='1.19.2-forge,1.20.1-forge,1.21.1-neoforge,1.21.11-neoforge,26.1.2-neoforge,26.2-neoforge,26.3-neoforge'
+          actual_targets="$(sed -n 's/^targets=//p' build-config/targets.properties | tr -d '\r')"
+          if [[ "$actual_targets" != "$expected_targets" ]]; then
+            echo "::error::Update publish.yml to match build-config/targets.properties: $actual_targets"
+            exit 1
+          fi
+          archive="$(sed -n 's/^common\.mod\.archive_name=//p' build-config/common.properties | tr -d '\r')"
+          if [[ "$archive" != 'AdditionalPipes-BCCE' ]]; then
+            echo "::error::Publication JAR naming must match common.mod.archive_name, got '$archive'."
+            exit 1
+          fi
+
+      - name: Derive release type
+        id: version_type
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          set -euo pipefail
+          case "$RELEASE_TAG" in
+            *-alpha*|*-dev*) release_type=alpha ;;
+            *-beta*|*-rc*) release_type=beta ;;
+            *) if [[ "$PRERELEASE" == 'true' ]]; then release_type=beta; else release_type=release; fi ;;
+          esac
+          echo "type=$release_type" >> "$GITHUB_OUTPUT"
+
+      - name: Validate publishing projects and tokens
+        shell: bash
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MODRINTH_TOKEN" || -z "$CURSEFORGE_TOKEN" ]]; then
+            echo '::error::Set MODRINTH_TOKEN and CURSEFORGE_TOKEN as repository Actions secrets.'
+            exit 1
+          fi
+          if [[ -z "$MODRINTH_PROJECT_ID" || -z "$CURSEFORGE_PROJECT_ID" ]]; then
+            echo '::error::Set MODRINTH_PROJECT_ID and CURSEFORGE_PROJECT_ID as repository Actions variables for Additional Pipes.'
+            exit 1
+          fi
+          if [[ ! "$MODRINTH_PROJECT_ID" =~ ^[A-Za-z0-9_-]+$ || ! "$CURSEFORGE_PROJECT_ID" =~ ^[0-9]+$ ]]; then
+            echo '::error::Invalid Additional Pipes project identifier format.'
+            exit 1
+          fi
+          # Prevent accidentally publishing addon binaries into BCCE's project.
+          if [[ "$MODRINTH_PROJECT_ID" == 'z3Aj5eOl' || "$CURSEFORGE_PROJECT_ID" == '1592400' ]]; then
+            echo '::error::The publishing destination must be Additional Pipes, not BuildCraft Community Edition.'
+            exit 1
+          fi
+
+  build:
+    name: Build ${{ matrix.generation }} / Java ${{ matrix.java }}
+    needs: metadata
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - generation: old
+            java: '17'
+            targets: '1.19.2-forge,1.20.1-forge'
+          - generation: 1.21.X
+            java: '21'
+            targets: '1.21.1-neoforge,1.21.11-neoforge'
+          - generation: 26.X
+            java: '25'
+            targets: '26.1.2-neoforge,26.2-neoforge,26.3-neoforge'
+    steps:
+      - name: Checkout tagged Additional Pipes sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build all targets in the generation
+        working-directory: builds/${{ matrix.generation }}
+        run: bash ./gradlew --no-daemon --console=plain buildAndCollect
+
+      - name: Verify and collect release JARs
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GENERATION: ${{ matrix.generation }}
+          TARGETS: ${{ matrix.targets }}
+        run: |
+          set -euo pipefail
+          destination="release/$GENERATION"
+          mkdir -p "$destination"
+          IFS=',' read -ra targets <<< "$TARGETS"
+          for target in "${targets[@]}"; do
+            minecraft="${target%-*}"
+            loader="${target##*-}"
+            jar="build/${minecraft}/AdditionalPipes-BCCE-${RELEASE_TAG}+${minecraft}+${loader}.jar"
+            if [[ ! -s "$jar" ]]; then
+              echo "::error::Missing release JAR: $jar"
+              find build -maxdepth 3 -type f -name '*.jar' -print || true
+              exit 1
+            fi
+            python scripts/verify_ap_jar.py "$target" "$jar"
+            cp "$jar" "$destination/"
+          done
+
+      - name: Upload ${{ matrix.generation }} release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: additional-pipes-release-${{ matrix.generation }}
+          path: release/${{ matrix.generation }}/*.jar
+          if-no-files-found: error
+
+  publish:
+    name: Publish seven targets sequentially
+    needs: [metadata, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download old artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: additional-pipes-release-old
+          path: release
+
+      - name: Download 1.21.X artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: additional-pipes-release-1.21.X
+          path: release
+
+      - name: Download 26.X artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: additional-pipes-release-26.X
+          path: release
+
+      - name: Verify complete seven-target release before publishing
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          for target in 1.19.2-forge 1.20.1-forge 1.21.1-neoforge 1.21.11-neoforge 26.1.2-neoforge 26.2-neoforge 26.3-neoforge; do
+            minecraft="${target%-*}"
+            loader="${target##*-}"
+            jar="release/AdditionalPipes-BCCE-${RELEASE_TAG}+${minecraft}+${loader}.jar"
+            if [[ ! -s "$jar" ]]; then
+              echo "::error::Missing release JAR: $jar"
+              exit 1
+            fi
+          done
+
+      - name: Publish 1.19.2 Forge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+1.19.2+forge.jar
+          name: ${{ github.event.release.tag_name }}+1.19.2+forge
+          version: ${{ github.event.release.tag_name }}+1.19.2+forge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: forge
+          game-versions: 1.19.2
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 1.20.1
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 1.20.1 Forge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+1.20.1+forge.jar
+          name: ${{ github.event.release.tag_name }}+1.20.1+forge
+          version: ${{ github.event.release.tag_name }}+1.20.1+forge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: forge
+          game-versions: 1.20.1
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 1.21.1
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 1.21.1 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+1.21.1+neoforge.jar
+          name: ${{ github.event.release.tag_name }}+1.21.1+neoforge
+          version: ${{ github.event.release.tag_name }}+1.21.1+neoforge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: neoforge
+          game-versions: 1.21.1
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 1.21.11
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 1.21.11 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+1.21.11+neoforge.jar
+          name: ${{ github.event.release.tag_name }}+1.21.11+neoforge
+          version: ${{ github.event.release.tag_name }}+1.21.11+neoforge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: neoforge
+          game-versions: 1.21.11
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 26.1.2
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 26.1.2 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+26.1.2+neoforge.jar
+          name: ${{ github.event.release.tag_name }}+26.1.2+neoforge
+          version: ${{ github.event.release.tag_name }}+26.1.2+neoforge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: neoforge
+          game-versions: 26.1.2
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 26.2
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 26.2 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+26.2+neoforge.jar
+          name: ${{ github.event.release.tag_name }}+26.2+neoforge
+          version: ${{ github.event.release.tag_name }}+26.2+neoforge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: neoforge
+          game-versions: 26.2
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
+
+      - name: Wait 1 minute before 26.3
+        run: sleep "$PUBLISH_DELAY_SECONDS"
+
+      - name: Publish 26.3 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          files: release/AdditionalPipes-BCCE-${{ github.event.release.tag_name }}+26.3+neoforge.jar
+          name: ${{ github.event.release.tag_name }}+26.3+neoforge
+          version: ${{ github.event.release.tag_name }}+26.3+neoforge
+          version-type: ${{ needs.metadata.outputs.version_type }}
+          loaders: neoforge
+          game-versions: 26.3
+          game-version-filter: none
+          environment: client | server
+
+          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-changelog: ${{ github.event.release.body }}
+          modrinth-dependencies: ${{ env.MODRINTH_DEPENDENCIES }}
+
+          curseforge-id: ${{ env.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-dependencies: ${{ env.CURSEFORGE_DEPENDENCIES }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-tag: ${{ github.event.release.tag_name }}
+          github-changelog: ''
