@@ -8,6 +8,19 @@ public final class GuiTextLayout {
     private GuiTextLayout() { }
 
     /**
+     * Uniform horizontal text scale (<= 1), measured with the actual Minecraft font.
+     * Unlike {@link #fit}, this retains the entire label for narrow tabs, buttons
+     * and translated strings while keeping the original text height.
+     */
+    public static float horizontalScale(String text, int maxPixels, ToIntFunction<String> width) {
+        Objects.requireNonNull(text, "text");
+        Objects.requireNonNull(width, "width");
+        if (maxPixels <= 0) return 0.0F;
+        int natural = Math.max(0, width.applyAsInt(text));
+        return natural <= maxPixels ? 1.0F : (float) maxPixels / natural;
+    }
+
+    /**
      * Truncates translated labels at a font-measured pixel boundary. An ellipsis
      * signals that text was clipped, and surrogate pairs are never split.
      */

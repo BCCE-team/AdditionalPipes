@@ -7,9 +7,11 @@ import buildcraft.additionalpipes.pipes.APTeleportPipes;
 import buildcraft.additionalpipes.pipes.APInsertionPipes;
 import buildcraft.additionalpipes.pipes.APStoragePipes;
 import buildcraft.additionalpipes.pipes.APUtilityPipes;
+import buildcraft.additionalpipes.pipes.APJeweledPipes;
 import buildcraft.additionalpipes.pipes.APAdditionPipes;
 import buildcraft.additionalpipes.pipes.ClosedPipeMenu;
 import buildcraft.additionalpipes.pipes.AdvancedWoodMenu;
+import buildcraft.additionalpipes.pipes.JeweledMenu;
 import buildcraft.transport.pipe.PipeRegistry;
 import buildcraft.transport.internal.pipe.PipeDefinition;
 import buildcraft.api.v2.BuildCraftApi;
@@ -39,6 +41,8 @@ public final class APContentRegistry {
         MENUS.register("advanced_wood", () -> new MenuType<>(AdvancedWoodMenu::new));
     public static final RegistryObject<MenuType<ClosedPipeMenu>> CLOSED_PIPE_MENU =
         MENUS.register("closed_pipe", () -> new MenuType<>(ClosedPipeMenu::new));
+    public static final RegistryObject<MenuType<JeweledMenu>> JEWELED_MENU =
+        MENUS.register("jeweled", () -> new MenuType<>(JeweledMenu::new));
     private static final Map<String, RegistryObject<Item>> ALL_ITEMS = new LinkedHashMap<>();
     private static final CreativeModeTab TAB = new CreativeModeTab("additionalpipes") {
         @Override
@@ -50,7 +54,7 @@ public final class APContentRegistry {
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
-            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id)) {
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id) || APJeweledPipes.isJeweled(id) || APAdditionPipes.isAddition(id)) {
                 ALL_ITEMS.put(id, ITEMS.register(id, () -> createTabbedPipeItem(id)));
                 continue;
             }

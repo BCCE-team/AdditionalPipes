@@ -7,9 +7,11 @@ import buildcraft.additionalpipes.pipes.APTeleportPipes;
 import buildcraft.additionalpipes.pipes.APInsertionPipes;
 import buildcraft.additionalpipes.pipes.APStoragePipes;
 import buildcraft.additionalpipes.pipes.APUtilityPipes;
+import buildcraft.additionalpipes.pipes.APJeweledPipes;
 import buildcraft.additionalpipes.pipes.APAdditionPipes;
 import buildcraft.additionalpipes.pipes.ClosedPipeMenu;
 import buildcraft.additionalpipes.pipes.AdvancedWoodMenu;
+import buildcraft.additionalpipes.pipes.JeweledMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.flag.FeatureFlags;
 import buildcraft.lib.compat.minecraft.registry.BCRegistrationScope;
@@ -38,12 +40,14 @@ public final class APContentRegistry {
     public static final Supplier<MenuType<ClosedPipeMenu>> CLOSED_PIPE_MENU =
         MENUS.register("closed_pipe", () -> new MenuType<>(ClosedPipeMenu::new, FeatureFlags.DEFAULT_FLAGS));
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, AdditionalPipes.MOD_ID);
+    public static final Supplier<MenuType<JeweledMenu>> JEWELED_MENU =
+        MENUS.register("jeweled", () -> new MenuType<>(JeweledMenu::new, FeatureFlags.DEFAULT_FLAGS));
     private static final Map<String, Supplier<? extends Item>> ALL_ITEMS = new LinkedHashMap<>();
 
     static {
         for (APContent.Definition definition : APContent.BLOCKS) {
             String id = definition.id();
-            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id)) {
+            if (APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id) || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id) || APUtilityPipes.isUtility(id) || APJeweledPipes.isJeweled(id) || APAdditionPipes.isAddition(id)) {
                 ALL_ITEMS.put(id, ITEMS.register(id, () -> BCRegistrationScope.item(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(AdditionalPipes.MOD_ID, id)), () -> AdditionalPipes.createPipeItem(id))));
                 continue;
             }

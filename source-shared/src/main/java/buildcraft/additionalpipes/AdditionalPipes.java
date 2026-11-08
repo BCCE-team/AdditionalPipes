@@ -7,6 +7,7 @@ import buildcraft.additionalpipes.pipes.APInsertionPipes;
 import buildcraft.additionalpipes.pipes.APStoragePipes;
 import buildcraft.additionalpipes.pipes.APUtilityPipes;
 import buildcraft.additionalpipes.pipes.APAdditionPipes;
+import buildcraft.additionalpipes.pipes.APJeweledPipes;
 import java.nio.file.Path;
 import net.minecraft.world.item.Item;
 
@@ -35,13 +36,15 @@ public final class AdditionalPipes {
         APStoragePipes.register();
         APUtilityPipes.register();
         APAdditionPipes.register();
+        APJeweledPipes.register();
         pipeTypesRegistered = true;
     }
 
     public static synchronized Item createPipeItem(String path) {
         if (!APSwitchPipes.isSwitch(path) && !APTeleportPipes.isTeleport(path)
             && !APInsertionPipes.isInsertion(path) && !APStoragePipes.isStorage(path)
-            && !APUtilityPipes.isUtility(path) && !APAdditionPipes.isAddition(path)) {
+            && !APUtilityPipes.isUtility(path) && !APAdditionPipes.isAddition(path)
+            && !APJeweledPipes.isJeweled(path)) {
             throw new IllegalArgumentException("Unknown Additional Pipes pipe: " + path);
         }
         ensurePipeTypesRegistered();
@@ -49,6 +52,7 @@ public final class AdditionalPipes {
         if (APTeleportPipes.isTeleport(path)) return APTeleportPipes.createItem(path);
         if (APInsertionPipes.isInsertion(path)) return APInsertionPipes.createItem(path);
         if (APStoragePipes.isStorage(path)) return APStoragePipes.createItem(path);
+        if (APJeweledPipes.isJeweled(path)) return APJeweledPipes.createItem(path);
         if (APUtilityPipes.isUtility(path)) return APUtilityPipes.createItem(path);
         return APAdditionPipes.createItem(path);
     }

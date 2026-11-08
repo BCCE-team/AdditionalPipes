@@ -17,6 +17,7 @@ EXCLUDE = {
     'ChunkloadRequestHandler.java', 'APDimensionIds.java', 'APPlayerLevel.java', 'APPlayerDrops.java', 'PlayerUtils.java',
     'APSwitchPipes.java', 'SwitchPipeBehaviour.java',
     'APAdditionPipes.java', 'AdditionPipeComponent.java',
+    'APJeweledPipes.java', 'JeweledPipeComponent.java', 'JeweledPipeBehaviour.java', 'JeweledMenu.java', 'JeweledScreen.java',
     'APTeleportPipes.java', 'TeleportPipeComponent.java',
     'TeleportUiServer.java', 'TeleportConfigScreen.java', 'APClientPackets.java', 'APClientScreenAccess.java',
     'InsertionConfigScreen.java', 'APInsertionPipes.java', 'PriorityInsertionComponent.java',

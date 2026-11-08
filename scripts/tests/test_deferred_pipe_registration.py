@@ -52,6 +52,7 @@ class DeferredRegistrationTests(unittest.TestCase):
                     self.assertIn('APStoragePipes.register();', common)
                     self.assertIn('APUtilityPipes.register();', common)
                     self.assertIn('APAdditionPipes.register();', common)
+                    self.assertIn('APJeweledPipes.register();', common)
                     self.assertIn('pipeTypesRegistered = true;', common)
                     if target.startswith('26.') or target == '1.21.11-neoforge':
                         self.assertIn('BCRegistrationScope.item(', registry)
@@ -95,6 +96,7 @@ class DeferredRegistrationTests(unittest.TestCase):
                 ('APStoragePipes', 'pipe_items_closed'),
                 ('APUtilityPipes', 'pipe_items_distribution'),
                 ('APAdditionPipes', 'pipe_items_addition'),
+                ('APJeweledPipes', 'pipe_items_jeweled'),
             ):
                 write(f'buildcraft/additionalpipes/pipes/{group}.java', f'''
                     package buildcraft.additionalpipes.pipes;
@@ -121,6 +123,7 @@ class DeferredRegistrationTests(unittest.TestCase):
                 import buildcraft.additionalpipes.pipes.APStoragePipes;
                 import buildcraft.additionalpipes.pipes.APUtilityPipes;
                 import buildcraft.additionalpipes.pipes.APAdditionPipes;
+                import buildcraft.additionalpipes.pipes.APJeweledPipes;
                 public class Test {
                     public static void main(String[] args) {
                         AdditionalPipes.initialize(); // BCCE transport is not initialized yet.
@@ -133,15 +136,16 @@ class DeferredRegistrationTests(unittest.TestCase):
                         Readiness.bcceReady = true; // BCCE mod constructor has finished.
                         for (String pipe : new String[] {"pipe_items_switch", "pipe_items_teleport",
                                 "pipe_items_adv_wood", "pipe_items_closed",
-                                "pipe_items_distribution", "pipe_items_addition"}) {
+                                "pipe_items_distribution", "pipe_items_addition", "pipe_items_jeweled"}) {
                             if (!pipe.equals(AdditionalPipes.createPipeItem(pipe).name))
                                 throw new AssertionError("Wrong item: " + pipe);
                         }
                         AdditionalPipes.createPipeItem("pipe_items_switch"); // Reentrant event is safe.
-                        if (Readiness.registrations != 6 || APSwitchPipes.calls != 1 ||
+                        if (Readiness.registrations != 7 || APSwitchPipes.calls != 1 ||
                                 APTeleportPipes.calls != 1 || APInsertionPipes.calls != 1 ||
                                 APStoragePipes.calls != 1 ||
-                                APUtilityPipes.calls != 1 || APAdditionPipes.calls != 1) throw new AssertionError("Duplicate or missing registration");
+                                APUtilityPipes.calls != 1 || APAdditionPipes.calls != 1
+                                || APJeweledPipes.calls != 1) throw new AssertionError("Duplicate or missing registration");
                         System.out.println("PASS: AP registry initializes once after BCCE");
                     }
                 }

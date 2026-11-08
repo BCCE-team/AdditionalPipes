@@ -56,5 +56,16 @@
   "pipe.additionalpipes.pipe_items_priority": "Priority Insertion Pipe",
   "pipe.additionalpipes.pipe_items_closed": "Closed Transport Pipe",
   "pipe.additionalpipes.pipe_items_gravity_feed": "Gravity Feed Transport Pipe",
-  "pipe.additionalpipes.pipe_fluids_obsidian": "Obsidian Fluid Pipe"
+  "pipe.additionalpipes.pipe_fluids_obsidian": "Obsidian Fluid Pipe",
+  "pipe.additionalpipes.pipe_items_jeweled": "Jeweled Transport Pipe",
+  "gui.additionalpipes.jeweled.unsorted": "Accept Unsorted",
+  "gui.additionalpipes.jeweled.match": "Match:",
+  "gui.additionalpipes.jeweled.nbt": "Tag",
+  "gui.additionalpipes.jeweled.metadata": "Meta",
+  "gui.additionalpipes.jeweled.side.down": "Down",
+  "gui.additionalpipes.jeweled.side.up": "Up",
+  "gui.additionalpipes.jeweled.side.north": "North",
+  "gui.additionalpipes.jeweled.side.south": "South",
+  "gui.additionalpipes.jeweled.side.west": "West",
+  "gui.additionalpipes.jeweled.side.east": "East"
 }

@@ -303,10 +303,12 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                 ('APStoragePipes', ('pipe_items_closed','pipe_items_gravity_feed')),
                 ('APUtilityPipes', ('pipe_items_distribution','pipe_fluids_water_pump','pipe_fluids_obsidian')),
                 ('APAdditionPipes', ('pipe_items_addition',)),
+                ('APJeweledPipes', ('pipe_items_jeweled',)),
             ):
                 method = {'APSwitchPipes':'isSwitch','APTeleportPipes':'isTeleport',
                           'APInsertionPipes':'isInsertion','APStoragePipes':'isStorage',
-                          'APUtilityPipes':'isUtility', 'APAdditionPipes':'isAddition'}[name]
+                          'APUtilityPipes':'isUtility', 'APAdditionPipes':'isAddition',
+                          'APJeweledPipes':'isJeweled'}[name]
                 values = ','.join('"'+value+'"' for value in ids)
                 write(prefix + 'pipes/' + name + '.java', f'''
                     package buildcraft.additionalpipes.pipes;
@@ -316,7 +318,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                         }}
                     }}
                 ''')
-            for name in ('AdvancedWoodMenu', 'ClosedPipeMenu'):
+            for name in ('AdvancedWoodMenu', 'ClosedPipeMenu', 'JeweledMenu'):
                 write(prefix + 'pipes/' + name + '.java', f'''
                     package buildcraft.additionalpipes.pipes;
                     public class {name} {{ public {name}(int id,Object inventory) {{ }} }}
@@ -347,7 +349,8 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                             Item item=entries.get(id).get();
                             boolean pipe=APSwitchPipes.isSwitch(id) || APTeleportPipes.isTeleport(id)
                                 || APInsertionPipes.isInsertion(id) || APStoragePipes.isStorage(id)
-                                || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id);
+                                || APUtilityPipes.isUtility(id) || APAdditionPipes.isAddition(id)
+                                || APJeweledPipes.isJeweled(id);
                             if (pipe) {
                                 pipes++;
                                 if (!(item instanceof APItemPipeHolder))
@@ -371,13 +374,13 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                 throw new AssertionError("Other AP content lost from tab " + id);
                             }
                         }
-                        if (pipes!=16) throw new AssertionError("Expected 16 registered BCCE pipe adapters: " + pipes);
+                        if (pipes!=17) throw new AssertionError("Expected 17 registered BCCE pipe adapters: " + pipes);
                         if (entries.containsKey("dog_deaggravator") || entries.containsKey("teleport_tether"))
                             throw new AssertionError("Removed placeholders were registered");
                         if (ap.makeIcon().item!=entries.get("pipe_items_teleport").get())
                             throw new AssertionError("Wrong AP icon");
                         Item.assertNoUnregisteredHolders();
-                        System.out.println("PASS: 16 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
+                        System.out.println("PASS: 17 AP pipes, 0 BCCE tab leaks, 0 intrusive holders");
                     }
                 }
             ''')
@@ -389,7 +392,7 @@ class Forge1192CreativeTabTests(unittest.TestCase):
                                      'buildcraft.additionalpipes.platform.TestHarness'],
                                     text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('PASS: 16 AP pipes', result.stdout)
+            self.assertIn('PASS: 17 AP pipes', result.stdout)
 
 
 if __name__ == '__main__':

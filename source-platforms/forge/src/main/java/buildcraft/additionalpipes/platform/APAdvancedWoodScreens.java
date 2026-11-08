@@ -3,6 +3,7 @@ package buildcraft.additionalpipes.platform;
 import buildcraft.additionalpipes.AdditionalPipes;
 import buildcraft.additionalpipes.client.AdvancedWoodScreen;
 import buildcraft.additionalpipes.client.ClosedPipeScreen;
+import buildcraft.additionalpipes.client.JeweledScreen;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -18,6 +19,7 @@ public final class APAdvancedWoodScreens {
         event.enqueueWork(() -> {
             MenuScreens.register(APContentRegistry.ADVANCED_WOOD_MENU.get(), AdvancedWoodScreen::new);
             MenuScreens.register(APContentRegistry.CLOSED_PIPE_MENU.get(), ClosedPipeScreen::new);
+            MenuScreens.register(APContentRegistry.JEWELED_MENU.get(), JeweledScreen::new);
         });
     }
 }
